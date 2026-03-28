@@ -69,7 +69,7 @@ export default function App() {
   const cameraShots = (timelineRaw as { cameraShots: CameraShot[] }).cameraShots;
 
   return (
-    <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+    <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#030308' }}>
       {/* Leva debug panel — collapsed & hidden in production */}
       <Leva
         collapsed
@@ -94,6 +94,9 @@ export default function App() {
           dpr={[1, 1.5]}
           style={{ background: '#030308' }}
           frameloop="always"
+          onCreated={({ gl }) => {
+            gl.setClearColor('#030308', 1);
+          }}
         >
           <SceneContent
             cameraShots={cameraShots}
