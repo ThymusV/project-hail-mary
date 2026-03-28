@@ -24,8 +24,12 @@ import {
 // ── Constants ───────────────────────────────────────────────────────────
 
 const CURVE_SEGMENTS = 256;
-const TUBE_RADIUS = 0.04;
+const TUBE_RADIUS = 0.06;
 const TUBE_RADIAL_SEGMENTS = 6;
+
+/** Glow pass: larger radius, lower opacity for soft bloom effect. */
+const GLOW_RADIUS_MULTIPLIER = 2.5;
+const GLOW_OPACITY = 0.18;
 
 /** Progress ranges where each segment draws (start, end). */
 const SEGMENT_PROGRESS_RANGES: [number, number][] = [
@@ -56,6 +60,7 @@ const fragmentShader = /* glsl */ `
   uniform float uDrawProgress;
   uniform float uTime;
   uniform vec3 uColor;
+  uniform float uGlowPass;
 
   varying float vCurveT;
 
@@ -76,7 +81,14 @@ const fragmentShader = /* glsl */ `
     // Fade in from start
     float fadeIn = smoothstep(0.0, 0.02, vCurveT);
 
-    gl_FragColor = vec4(uColor * brightness * fadeIn, (0.6 + edgeGlow * 0.4) * fadeIn);
+    // Glow pass: softer, lower alpha for bloom halo
+    float alpha = (0.6 + edgeGlow * 0.4) * fadeIn;
+    if (uGlowPass > 0.5) {
+      brightness *= 0.4;
+      alpha *= ${GLOW_OPACITY.toFixed(2)};
+    }
+
+    gl_FragColor = vec4(uColor * brightness * fadeIn, alpha);
   }
 `;
 
@@ -85,22 +97,19 @@ const fragmentShader = /* glsl */ `
 interface SegmentTubeData {
   geometry: THREE.TubeGeometry;
   material: THREE.ShaderMaterial;
+  glowGeometry: THREE.TubeGeometry;
+  glowMaterial: THREE.ShaderMaterial;
   color: THREE.Color;
 }
 
-function buildSegmentTube(
+/**
+ * Stamp the aCurveT attribute onto an existing TubeGeometry so the
+ * draw-on shader knows where each vertex sits along the curve.
+ */
+function stampCurveT(
+  tubeGeo: THREE.TubeGeometry,
   curve: THREE.CatmullRomCurve3,
-  colorHex: string,
-): SegmentTubeData {
-  const tubeGeo = new THREE.TubeGeometry(
-    curve,
-    CURVE_SEGMENTS,
-    TUBE_RADIUS,
-    TUBE_RADIAL_SEGMENTS,
-    false,
-  );
-
-  // Compute per-vertex curve parameter (0-1) for draw effect
+): void {
   const posAttr = tubeGeo.getAttribute('position');
   const count = posAttr.count;
   const curveTs = new Float32Array(count);
@@ -123,6 +132,21 @@ function buildSegmentTube(
   }
 
   tubeGeo.setAttribute('aCurveT', new THREE.BufferAttribute(curveTs, 1));
+}
+
+function buildSegmentTube(
+  curve: THREE.CatmullRomCurve3,
+  colorHex: string,
+): SegmentTubeData {
+  // ── Core tube ──────────────────────────────────────────────────────
+  const tubeGeo = new THREE.TubeGeometry(
+    curve,
+    CURVE_SEGMENTS,
+    TUBE_RADIUS,
+    TUBE_RADIAL_SEGMENTS,
+    false,
+  );
+  stampCurveT(tubeGeo, curve);
 
   const color = new THREE.Color(colorHex);
   const mat = new THREE.ShaderMaterial({
@@ -132,6 +156,7 @@ function buildSegmentTube(
       uDrawProgress: { value: 0 },
       uTime: { value: 0 },
       uColor: { value: color },
+      uGlowPass: { value: 0.0 },
     },
     transparent: true,
     depthWrite: false,
@@ -139,13 +164,39 @@ function buildSegmentTube(
     side: THREE.DoubleSide,
   });
 
-  return { geometry: tubeGeo, material: mat, color };
+  // ── Glow tube (larger radius, marked as glow pass) ────────────────
+  const glowGeo = new THREE.TubeGeometry(
+    curve,
+    CURVE_SEGMENTS,
+    TUBE_RADIUS * GLOW_RADIUS_MULTIPLIER,
+    TUBE_RADIAL_SEGMENTS,
+    false,
+  );
+  stampCurveT(glowGeo, curve);
+
+  const glowMat = new THREE.ShaderMaterial({
+    vertexShader,
+    fragmentShader,
+    uniforms: {
+      uDrawProgress: { value: 0 },
+      uTime: { value: 0 },
+      uColor: { value: color },
+      uGlowPass: { value: 1.0 },
+    },
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+  });
+
+  return { geometry: tubeGeo, material: mat, glowGeometry: glowGeo, glowMaterial: glowMat, color };
 }
 
 // ── Component ───────────────────────────────────────────────────────────
 
 export function Trajectory() {
   const materialRefs = useRef<THREE.ShaderMaterial[]>([]);
+  const glowMaterialRefs = useRef<THREE.ShaderMaterial[]>([]);
   const separationRef = useRef<THREE.Mesh>(null!);
   const reunionRef = useRef<THREE.Mesh>(null!);
 
@@ -160,16 +211,16 @@ export function Trajectory() {
   const setMaterialRef = (index: number) => (el: THREE.ShaderMaterial | null) => {
     if (el) materialRefs.current[index] = el;
   };
+  const setGlowMaterialRef = (index: number) => (el: THREE.ShaderMaterial | null) => {
+    if (el) glowMaterialRefs.current[index] = el;
+  };
 
   useFrame(({ clock }) => {
     const progress = useTimelineStore.getState().storyProgress;
     const time = clock.elapsedTime;
 
-    // Update each segment's draw progress
+    // Update each segment's draw progress (core + glow)
     for (let i = 0; i < tubes.length; i++) {
-      const mat = materialRefs.current[i];
-      if (!mat) continue;
-
       const [rangeStart, rangeEnd] = SEGMENT_PROGRESS_RANGES[i];
       const rangeSpan = rangeEnd - rangeStart;
 
@@ -181,8 +232,17 @@ export function Trajectory() {
         localDraw = (progress - rangeStart) / rangeSpan;
       }
 
-      mat.uniforms.uDrawProgress.value = localDraw;
-      mat.uniforms.uTime.value = time;
+      const mat = materialRefs.current[i];
+      if (mat) {
+        mat.uniforms.uDrawProgress.value = localDraw;
+        mat.uniforms.uTime.value = time;
+      }
+
+      const glowMat = glowMaterialRefs.current[i];
+      if (glowMat) {
+        glowMat.uniforms.uDrawProgress.value = localDraw;
+        glowMat.uniforms.uTime.value = time;
+      }
     }
 
     // Separation marker: visible when progress passes ~0.65
@@ -209,12 +269,23 @@ export function Trajectory() {
 
   return (
     <group>
-      {/* Segment tubes */}
+      {/* Segment tubes — core pass */}
       {tubes.map((tube, i) => (
-        <mesh key={i} geometry={tube.geometry} frustumCulled={false}>
+        <mesh key={`core-${i}`} geometry={tube.geometry} frustumCulled={false}>
           <primitive
             object={tube.material}
             ref={setMaterialRef(i)}
+            attach="material"
+          />
+        </mesh>
+      ))}
+
+      {/* Segment tubes — glow pass (larger radius, lower opacity) */}
+      {tubes.map((tube, i) => (
+        <mesh key={`glow-${i}`} geometry={tube.glowGeometry} frustumCulled={false}>
+          <primitive
+            object={tube.glowMaterial}
+            ref={setGlowMaterialRef(i)}
             attach="material"
           />
         </mesh>

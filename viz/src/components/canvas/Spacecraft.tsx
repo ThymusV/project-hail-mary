@@ -15,7 +15,7 @@ import { getSharedCurve } from '@/utils/sharedCurve';
 // ── Constants ───────────────────────────────────────────────────────────
 
 const SHIP_SCALE = 0.3;
-const TRAIL_COUNT = 24;
+const TRAIL_COUNT = 36;
 const TRAIL_DECAY = 0.92;
 
 // ── Trail particle vertex/fragment shaders ──────────────────────────────
@@ -47,7 +47,8 @@ const trailFragmentShader = /* glsl */ `
     if (glow < 0.01) discard;
 
     vec3 color = mix(vec3(0.3, 0.6, 1.0), vec3(0.8, 0.9, 1.0), glow);
-    gl_FragColor = vec4(color * glow * 2.0, glow * vAlpha);
+    float alpha = min(glow * vAlpha, 1.0);
+    gl_FragColor = vec4(color * glow * 2.5, alpha);
   }
 `;
 
@@ -56,6 +57,7 @@ const trailFragmentShader = /* glsl */ `
 export function Spacecraft() {
   const meshRef = useRef<THREE.Mesh>(null!);
   const trailPointsRef = useRef<THREE.Points>(null!);
+  const pointLightRef = useRef<THREE.PointLight>(null!);
 
   // Trail buffers
   const trail = useMemo(() => {
@@ -100,8 +102,9 @@ export function Spacecraft() {
     curve.getPointAt(t, _pos);
     curve.getTangentAt(t, _tangent);
 
-    // Update ship position
+    // Update ship position (hide at progress=0 to avoid first-frame glitch)
     if (meshRef.current) {
+      meshRef.current.visible = progress > 0.001;
       meshRef.current.position.copy(_pos);
 
       // Orient along tangent
@@ -123,20 +126,26 @@ export function Spacecraft() {
       alphaArr[i] = alphaArr[i - 1] * TRAIL_DECAY;
     }
 
-    // Head of trail = ship position
+    // Head of trail = ship position (brighter head particle)
     posArr[0] = _pos.x;
     posArr[1] = _pos.y;
     posArr[2] = _pos.z;
-    alphaArr[0] = progress > 0.001 ? 1.0 : 0.0;
+    alphaArr[0] = progress > 0.001 ? 1.5 : 0.0;
 
     posAttr.needsUpdate = true;
     alphaAttr.needsUpdate = true;
+
+    // Move attached point light with the ship
+    if (pointLightRef.current) {
+      pointLightRef.current.position.copy(_pos);
+      pointLightRef.current.visible = progress > 0.001;
+    }
   });
 
   return (
     <group>
-      {/* Ship body */}
-      <mesh ref={meshRef} scale={SHIP_SCALE}>
+      {/* Ship body — starts hidden; useFrame reveals it when progress > 0 */}
+      <mesh ref={meshRef} scale={SHIP_SCALE} visible={false}>
         <octahedronGeometry args={[1, 0]} />
         <meshStandardMaterial
           color="#88bbff"
@@ -156,6 +165,16 @@ export function Spacecraft() {
       >
         <primitive object={trail.material} attach="material" />
       </points>
+
+      {/* Point light attached to ship — illuminates nearby geometry */}
+      <pointLight
+        ref={pointLightRef}
+        color="#4488ff"
+        intensity={2}
+        distance={3}
+        decay={2}
+        visible={false}
+      />
     </group>
   );
 }

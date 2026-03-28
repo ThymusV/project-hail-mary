@@ -32,6 +32,7 @@ const vertexShader = /* glsl */ `
 
   varying vec3 vColor;
   varying float vAlpha;
+  varying float vDepth;
 
   void main() {
     vColor = aColor;
@@ -51,12 +52,16 @@ const vertexShader = /* glsl */ `
     gl_PointSize = max(gl_PointSize, 1.0);
 
     gl_Position = projectionMatrix * mvPosition;
+
+    // Pass normalised device depth for fog/depth fade
+    vDepth = gl_Position.z / gl_Position.w;
   }
 `;
 
 const fragmentShader = /* glsl */ `
   varying vec3 vColor;
   varying float vAlpha;
+  varying float vDepth;
 
   void main() {
     // Soft circular point with glow falloff
@@ -72,7 +77,11 @@ const fragmentShader = /* glsl */ `
 
     if (brightness < 0.01) discard;
 
-    gl_FragColor = vec4(vColor * brightness, brightness * vAlpha);
+    // Depth fade: distant stars dim to create depth perception.
+    // vDepth is in NDC [-1,1]; remap so near stars are bright, far stars fade.
+    float depthFade = 1.0 - smoothstep(0.3, 0.98, vDepth);
+
+    gl_FragColor = vec4(vColor * brightness * depthFade, brightness * vAlpha * depthFade);
   }
 `;
 
