@@ -1,22 +1,23 @@
 /**
- * CameraRig — butter-smooth camera controller.
+ * CameraRig — multi-mode camera controller.
  *
- * SINGLE CAMERA OWNER: CameraControls is the sole writer.
- * - Playing: we compute the target from timeline interpolation,
- *   then call controlsRef.setLookAt() with smooth=false each frame.
- * - Paused: CameraControls handles user orbit/zoom with smoothTime.
- * - Recenter: smooth setLookAt back to the cinematic track.
+ * Three modes (from useCameraStore):
+ *   'follow'   – auto-follow cinematic track, user can still interact
+ *   'overview' – fixed wide-angle of full trajectory
+ *   'free'     – full user control, auto-reverts after 3s idle
  *
- * This eliminates the dual-ownership bug where direct camera.position
- * writes fought with CameraControls.
+ * CameraControls is ALWAYS enabled so user can interact at any time.
+ * In 'follow' mode, we drive CameraControls via setLookAt each frame.
+ * User mouse/wheel input triggers switch to 'free' mode temporarily.
  */
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import { CameraControls } from '@react-three/drei';
 import type CameraControlsImpl from 'camera-controls';
 import { useTimelineStore } from '@/stores/useTimelineStore';
+import { useCameraStore } from '@/stores/useCameraStore';
 import { interpolateCamera } from '@/engine/cameraInterpolation';
 import { progressToTime } from '@/engine/timeMapping';
 import type { CameraShot } from '@/engine/cameraInterpolation';
@@ -27,15 +28,17 @@ interface CameraRigProps {
   progressMapping: ProgressMapping;
 }
 
-/** High lambda = camera snaps to target quickly, no wobble */
-const DAMP_LAMBDA = 12;
+/** Camera snaps to target quickly in follow mode */
+const FOLLOW_DAMP = 10;
+/** Slow drift in overview mode */
+const OVERVIEW_DAMP = 3;
 
-function dampVec3(
-  current: THREE.Vector3,
-  target: THREE.Vector3,
-  lambda: number,
-  dt: number,
-): void {
+/** Fixed overview position: sees the entire trajectory */
+const OVERVIEW_POS: [number, number, number] = [2, 12, 22];
+const OVERVIEW_TARGET: [number, number, number] = [2, 0, 0];
+const OVERVIEW_FOV = 50;
+
+function dampVec3(current: THREE.Vector3, target: THREE.Vector3, lambda: number, dt: number) {
   current.x = THREE.MathUtils.damp(current.x, target.x, lambda, dt);
   current.y = THREE.MathUtils.damp(current.y, target.y, lambda, dt);
   current.z = THREE.MathUtils.damp(current.z, target.z, lambda, dt);
@@ -45,17 +48,20 @@ export function CameraRig({ cameraShots, progressMapping }: CameraRigProps) {
   const { camera } = useThree();
   const controlsRef = useRef<CameraControlsImpl>(null!);
 
-  // Smooth interpolation targets
   const smoothPos = useRef(new THREE.Vector3(0, 5, 15));
   const smoothTarget = useRef(new THREE.Vector3(0, 0, 0));
   const smoothFov = useRef(60);
   const initialized = useRef(false);
 
-  const isPlaying = useTimelineStore((s) => s.isPlaying);
   const recenterRequestId = useTimelineStore((s) => s.recenterRequestId);
   const lastRecenterId = useRef(0);
 
-  // Initialize smooth refs from first camera shot
+  // Listen for user interaction on the CameraControls
+  const onControlStart = useCallback(() => {
+    useCameraStore.getState().notifyUserInteraction();
+  }, []);
+
+  // Initialize from first camera shot
   useEffect(() => {
     if (initialized.current) return;
     const progress = useTimelineStore.getState().storyProgress;
@@ -65,43 +71,28 @@ export function CameraRig({ cameraShots, progressMapping }: CameraRigProps) {
       smoothPos.current.set(...target.position);
       smoothTarget.current.set(...target.target);
       smoothFov.current = target.fov;
-
-      // Set camera immediately on first mount
       camera.position.copy(smoothPos.current);
       camera.lookAt(smoothTarget.current);
-      if ((camera as THREE.PerspectiveCamera).fov !== undefined) {
-        (camera as THREE.PerspectiveCamera).fov = target.fov;
-        (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
-      }
-
-      // Also set CameraControls initial state
+      const pc = camera as THREE.PerspectiveCamera;
+      if (pc.fov !== undefined) { pc.fov = target.fov; pc.updateProjectionMatrix(); }
       if (controlsRef.current) {
-        controlsRef.current.setLookAt(
-          ...target.position,
-          ...target.target,
-          false,
-        );
+        controlsRef.current.setLookAt(...target.position, ...target.target, false);
       }
       initialized.current = true;
     }
   }, [camera, cameraShots, progressMapping]);
 
-  // Handle recenter requests
+  // Handle recenter: switch back to follow + animate
   useEffect(() => {
     if (recenterRequestId > lastRecenterId.current) {
       lastRecenterId.current = recenterRequestId;
+      useCameraStore.getState().setMode('follow');
 
       const progress = useTimelineStore.getState().storyProgress;
       const chronoTime = progressToTime(progress, progressMapping);
       const target = interpolateCamera(chronoTime, cameraShots);
       if (!target || !controlsRef.current) return;
-
-      controlsRef.current.setLookAt(
-        ...target.position,
-        ...target.target,
-        true, // smooth transition
-      );
-
+      controlsRef.current.setLookAt(...target.position, ...target.target, true);
       smoothPos.current.set(...target.position);
       smoothTarget.current.set(...target.target);
       smoothFov.current = target.fov;
@@ -110,41 +101,58 @@ export function CameraRig({ cameraShots, progressMapping }: CameraRigProps) {
 
   useFrame((_state, delta) => {
     const dt = Math.min(delta, 0.1);
-    const progress = useTimelineStore.getState().storyProgress;
-    const playing = useTimelineStore.getState().isPlaying;
+    const mode = useCameraStore.getState().mode;
 
+    // Tick idle timer for auto-revert from free to follow
+    useCameraStore.getState().tickIdle(dt);
+
+    const progress = useTimelineStore.getState().storyProgress;
     const chronoTime = progressToTime(progress, progressMapping);
     const target = interpolateCamera(chronoTime, cameraShots);
     if (!target) return;
 
-    const targetPos = new THREE.Vector3(...target.position);
-    const targetLook = new THREE.Vector3(...target.target);
-    const targetFov = target.fov;
+    if (mode === 'follow') {
+      const targetPos = new THREE.Vector3(...target.position);
+      const targetLook = new THREE.Vector3(...target.target);
 
-    if (playing && controlsRef.current) {
-      // Smooth damp toward cinematic target
-      dampVec3(smoothPos.current, targetPos, DAMP_LAMBDA, dt);
-      dampVec3(smoothTarget.current, targetLook, DAMP_LAMBDA, dt);
-      smoothFov.current = THREE.MathUtils.damp(smoothFov.current, targetFov, DAMP_LAMBDA, dt);
+      dampVec3(smoothPos.current, targetPos, FOLLOW_DAMP, dt);
+      dampVec3(smoothTarget.current, targetLook, FOLLOW_DAMP, dt);
+      smoothFov.current = THREE.MathUtils.damp(smoothFov.current, target.fov, FOLLOW_DAMP, dt);
 
-      // Drive camera through CameraControls (single owner)
-      controlsRef.current.setLookAt(
-        smoothPos.current.x, smoothPos.current.y, smoothPos.current.z,
-        smoothTarget.current.x, smoothTarget.current.y, smoothTarget.current.z,
-        false, // no transition, we're damping ourselves
-      );
-
-      // Update FOV
-      const perspCam = camera as THREE.PerspectiveCamera;
-      if (perspCam.fov !== undefined) {
-        perspCam.fov = smoothFov.current;
-        perspCam.updateProjectionMatrix();
+      if (controlsRef.current) {
+        controlsRef.current.setLookAt(
+          smoothPos.current.x, smoothPos.current.y, smoothPos.current.z,
+          smoothTarget.current.x, smoothTarget.current.y, smoothTarget.current.z,
+          false,
+        );
       }
+      const pc = camera as THREE.PerspectiveCamera;
+      if (pc.fov !== undefined) { pc.fov = smoothFov.current; pc.updateProjectionMatrix(); }
+
+    } else if (mode === 'overview') {
+      const ovPos = new THREE.Vector3(...OVERVIEW_POS);
+      const ovTgt = new THREE.Vector3(...OVERVIEW_TARGET);
+
+      dampVec3(smoothPos.current, ovPos, OVERVIEW_DAMP, dt);
+      dampVec3(smoothTarget.current, ovTgt, OVERVIEW_DAMP, dt);
+      smoothFov.current = THREE.MathUtils.damp(smoothFov.current, OVERVIEW_FOV, OVERVIEW_DAMP, dt);
+
+      if (controlsRef.current) {
+        controlsRef.current.setLookAt(
+          smoothPos.current.x, smoothPos.current.y, smoothPos.current.z,
+          smoothTarget.current.x, smoothTarget.current.y, smoothTarget.current.z,
+          false,
+        );
+      }
+      const pc = camera as THREE.PerspectiveCamera;
+      if (pc.fov !== undefined) { pc.fov = smoothFov.current; pc.updateProjectionMatrix(); }
+
     } else {
-      // Paused: CameraControls handles orbit. Track smooth targets loosely.
-      dampVec3(smoothPos.current, targetPos, DAMP_LAMBDA * 0.3, dt);
-      dampVec3(smoothTarget.current, targetLook, DAMP_LAMBDA * 0.3, dt);
-      smoothFov.current = THREE.MathUtils.damp(smoothFov.current, targetFov, DAMP_LAMBDA * 0.3, dt);
+      // 'free' mode: CameraControls handles everything.
+      // Just keep smooth refs updated so returning to follow is seamless.
+      dampVec3(smoothPos.current, new THREE.Vector3(...target.position), FOLLOW_DAMP * 0.2, dt);
+      dampVec3(smoothTarget.current, new THREE.Vector3(...target.target), FOLLOW_DAMP * 0.2, dt);
+      smoothFov.current = THREE.MathUtils.damp(smoothFov.current, target.fov, FOLLOW_DAMP * 0.2, dt);
     }
   });
 
@@ -152,11 +160,12 @@ export function CameraRig({ cameraShots, progressMapping }: CameraRigProps) {
     <CameraControls
       ref={controlsRef}
       makeDefault
-      enabled={!isPlaying}
+      enabled
       smoothTime={0.35}
       draggingSmoothTime={0.15}
       minDistance={0.5}
       maxDistance={300}
+      onStart={onControlStart}
     />
   );
 }

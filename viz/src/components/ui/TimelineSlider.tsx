@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useTimelineStore } from '../../stores/useTimelineStore';
 import { useUIStore } from '../../stores/useUIStore';
+import { useCameraStore, type CameraMode } from '../../stores/useCameraStore';
 import { useTimelineData } from '../../hooks/useTimelineData';
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -394,6 +395,46 @@ function RecenterIcon({ size = 13 }: { size?: number }) {
  * Component
  * ═══════════════════════════════════════════════════════════════════════ */
 
+/* ── Camera Mode Toggle ────────────────────────────────────────────── */
+
+const CAMERA_MODES: { id: CameraMode; label: string; icon: string }[] = [
+  { id: 'follow', label: '跟随', icon: '◎' },
+  { id: 'overview', label: '全景', icon: '⊞' },
+  { id: 'free', label: '自由', icon: '✦' },
+];
+
+function CameraModeToggle() {
+  const mode = useCameraStore((s) => s.mode);
+  const setMode = useCameraStore((s) => s.setMode);
+  return (
+    <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 999, padding: 2 }}>
+      {CAMERA_MODES.map((m) => (
+        <button
+          key={m.id}
+          onClick={(e) => { e.stopPropagation(); setMode(m.id); }}
+          title={m.label}
+          style={{
+            fontSize: 10,
+            fontWeight: 500,
+            padding: '3px 8px',
+            borderRadius: 999,
+            borderWidth: 0, borderStyle: 'none' as const, borderColor: 'transparent',
+            cursor: 'pointer',
+            background: mode === m.id ? 'rgba(68,136,255,0.3)' : 'transparent',
+            color: mode === m.id ? '#88bbff' : 'rgba(255,255,255,0.4)',
+            transition: 'all 200ms ease-out',
+            outline: 'none',
+          }}
+        >
+          {m.icon} {m.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════ */
+
 const SPEEDS = [0.1, 0.2, 0.5, 1, 10, 100] as const;
 
 export function TimelineSlider() {
@@ -674,6 +715,9 @@ export function TimelineSlider() {
               </div>
             </button>
           </div>
+
+          {/* Camera mode toggle */}
+          <CameraModeToggle />
 
           {/* Right: scene name */}
           <span style={S.sceneText}>{currentScene?.label ?? ''}</span>
