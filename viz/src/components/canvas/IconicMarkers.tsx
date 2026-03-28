@@ -182,12 +182,43 @@ function TargetAMarker() {
   );
 }
 
+// ── Target A trajectory line ───────────────────────────────────────────
+
+function TargetATrajectory() {
+  const { geometry, material } = useMemo(() => {
+    const curve = new THREE.CatmullRomCurve3(TARGET_A_PATH, false, 'centripetal', 0.5);
+    const points = curve.getPoints(100);
+    const geo = new THREE.BufferGeometry().setFromPoints(points);
+
+    const mat = new THREE.LineBasicMaterial({
+      color: '#ff8833',
+      transparent: true,
+      opacity: 0.35,
+      depthWrite: false,
+      linewidth: 1,
+    });
+    return { geometry: geo, material: mat };
+  }, []);
+
+  const lineRef = useRef<THREE.Line>(null!);
+
+  useFrame(() => {
+    if (!lineRef.current) return;
+    const progress = useTimelineStore.getState().storyProgress;
+    // Show path after Target A appears
+    lineRef.current.visible = progress > 0.35;
+  });
+
+  return <line ref={lineRef} geometry={geometry} material={material} visible={false} />;
+}
+
 // ── Composite ───────────────────────────────────────────────────────────
 
 export function IconicMarkers() {
   return (
     <group>
       <EarthMarker />
+      <TargetATrajectory />
       <TargetAMarker />
     </group>
   );
