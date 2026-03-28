@@ -394,7 +394,7 @@ function RecenterIcon({ size = 13 }: { size?: number }) {
  * Component
  * ═══════════════════════════════════════════════════════════════════════ */
 
-const SPEEDS = [1, 10, 100] as const;
+const SPEEDS = [0.1, 0.2, 0.5, 1, 10, 100] as const;
 
 export function TimelineSlider() {
   const {

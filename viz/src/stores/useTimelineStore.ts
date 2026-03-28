@@ -56,7 +56,7 @@ export const useTimelineStore = create<TimelineState>((set) => ({
   storyProgress: 0,
   chronologicalTime: 0,
   isPlaying: false,
-  playbackSpeed: 1,
+  playbackSpeed: 0.5,
   timelineMode: 'narrative',
 
   activeSceneId: null,

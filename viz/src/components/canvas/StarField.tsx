@@ -77,9 +77,9 @@ const fragmentShader = /* glsl */ `
 
     if (brightness < 0.01) discard;
 
-    // Depth fade: distant stars dim to create depth perception.
-    // vDepth is in NDC [-1,1]; remap so near stars are bright, far stars fade.
-    float depthFade = 1.0 - smoothstep(0.3, 0.98, vDepth);
+    // Subtle depth fade: only the very furthest stars dim slightly.
+    // vDepth is in NDC [-1,1]; most stars stay fully bright.
+    float depthFade = 1.0 - 0.4 * smoothstep(0.85, 0.99, vDepth);
 
     gl_FragColor = vec4(vColor * brightness * depthFade, brightness * vAlpha * depthFade);
   }
