@@ -29,6 +29,21 @@ canvas {
   display: block;
 }
 
+/* ─── CSS Vignette (replaces WebGL Vignette for stability) ────────── */
+
+.vignette-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 50%,
+    rgba(3, 3, 8, 0.35) 80%,
+    rgba(3, 3, 8, 0.7) 100%
+  );
+}
+
 /* ─── UI overlay sits on top of the canvas ─────────────────────────── */
 
 .ui-overlay {

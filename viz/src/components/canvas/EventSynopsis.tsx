@@ -65,8 +65,13 @@ export function EventSynopsis() {
   const prevEventId = useRef<string | null>(null);
   const posRef = useRef<[number, number, number]>([0, 0, 0]);
 
-  // Check for nearest event each frame
-  useFrame(() => {
+  // Check for nearest event at a throttled rate (not every frame)
+  const throttleRef = useRef(0);
+  useFrame((_state, delta) => {
+    throttleRef.current += delta;
+    if (throttleRef.current < 0.15) return; // check ~7 times/sec, not 60
+    throttleRef.current = 0;
+
     const progress = useTimelineStore.getState().storyProgress;
     const event = timeline.nearestEvent(progress);
 

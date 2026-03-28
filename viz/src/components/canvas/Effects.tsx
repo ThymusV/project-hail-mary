@@ -5,7 +5,7 @@
  * Leva controls available in dev mode.
  */
 
-import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { useControls } from 'leva';
 
 export function Effects() {
@@ -20,15 +20,6 @@ export function Effects() {
     { collapsed: true },
   );
 
-  const vignette = useControls(
-    'Vignette',
-    {
-      offset: { value: 0.3, min: 0, max: 1, step: 0.05 },
-      darkness: { value: 0.6, min: 0, max: 1, step: 0.05 },
-    },
-    { collapsed: true },
-  );
-
   return (
     <EffectComposer multisampling={0}>
       <Bloom
@@ -38,7 +29,6 @@ export function Effects() {
         luminanceSmoothing={bloom.luminanceSmoothing}
         radius={bloom.radius}
       />
-      <Vignette offset={vignette.offset} darkness={vignette.darkness} />
     </EffectComposer>
   );
 }

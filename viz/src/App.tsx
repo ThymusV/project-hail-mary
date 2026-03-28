@@ -102,6 +102,9 @@ export default function App() {
         </Canvas>
       </Suspense>
 
+      {/* CSS Vignette */}
+      <div className="vignette-overlay" />
+
       {/* HTML UI Overlay */}
       <div className="ui-overlay">
         <ChapterNav />
