@@ -27,7 +27,8 @@ interface CameraRigProps {
   progressMapping: ProgressMapping;
 }
 
-const DAMP_LAMBDA = 6;
+/** High lambda = camera snaps to target quickly, no wobble */
+const DAMP_LAMBDA = 12;
 
 function dampVec3(
   current: THREE.Vector3,

@@ -7,3 +7,4 @@ export { InfoPanel } from './InfoPanel';
 export { ChapterNav } from './ChapterNav';
 export { HelpOverlay } from './HelpOverlay';
 export { StatusPanel } from './StatusPanel';
+export { Legend } from './Legend';

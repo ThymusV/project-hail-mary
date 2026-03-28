@@ -59,9 +59,13 @@ function findActiveShot(
   chronoTime: number,
   shots: CameraShot[],
 ): CameraShot | null {
-  for (const shot of shots) {
-    if (chronoTime >= shot.startChronoTime && chronoTime <= shot.endChronoTime) {
-      return shot;
+  for (let i = 0; i < shots.length; i++) {
+    const shot = shots[i];
+    const isLast = i === shots.length - 1;
+    if (isLast) {
+      if (chronoTime >= shot.startChronoTime && chronoTime <= shot.endChronoTime) return shot;
+    } else {
+      if (chronoTime >= shot.startChronoTime && chronoTime < shot.endChronoTime) return shot;
     }
   }
   return null;

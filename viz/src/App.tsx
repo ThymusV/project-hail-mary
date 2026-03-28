@@ -25,6 +25,7 @@ import { InfoPanel } from '@/components/ui/InfoPanel';
 import { ChapterNav } from '@/components/ui/ChapterNav';
 import { HelpOverlay } from '@/components/ui/HelpOverlay';
 import { StatusPanel } from '@/components/ui/StatusPanel';
+import { Legend } from '@/components/ui/Legend';
 import { useTimelineData } from '@/hooks/useTimelineData';
 import { useStoryProgress } from '@/hooks/useStoryProgress';
 import type { CameraShot } from '@/engine/cameraInterpolation';
@@ -127,6 +128,7 @@ export default function App() {
         <StatusPanel />
         <TimelineSlider />
         <InfoPanel />
+        <Legend />
         <HelpOverlay />
       </div>
     </div>
