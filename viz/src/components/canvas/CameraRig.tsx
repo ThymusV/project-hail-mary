@@ -130,7 +130,6 @@ export function CameraRig({ cameraShots, progressMapping }: CameraRigProps) {
       }
 
       // Apply to camera — direct mutation is the standard R3F pattern
-      // eslint-disable-next-line react-hooks/immutability
       camera.position.copy(smoothPos.current);
       camera.lookAt(smoothTarget.current);
       const perspCam = camera as THREE.PerspectiveCamera;

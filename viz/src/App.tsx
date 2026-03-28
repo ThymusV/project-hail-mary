@@ -16,6 +16,9 @@ import { CameraRig } from '@/components/canvas/CameraRig';
 import { Effects } from '@/components/canvas/Effects';
 import { SceneTransition } from '@/components/canvas/SceneTransition';
 import { TimelineSlider } from '@/components/ui/TimelineSlider';
+import { InfoPanel } from '@/components/ui/InfoPanel';
+import { ChapterNav } from '@/components/ui/ChapterNav';
+import { HelpOverlay } from '@/components/ui/HelpOverlay';
 import { useTimelineData } from '@/hooks/useTimelineData';
 import { useStoryProgress } from '@/hooks/useStoryProgress';
 import type { CameraShot } from '@/engine/cameraInterpolation';
@@ -100,7 +103,10 @@ export default function App() {
 
       {/* HTML UI Overlay */}
       <div className="ui-overlay">
+        <ChapterNav />
         <TimelineSlider />
+        <InfoPanel />
+        <HelpOverlay />
       </div>
     </div>
   );

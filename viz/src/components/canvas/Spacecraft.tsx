@@ -10,7 +10,7 @@ import { useRef, useMemo } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useTimelineStore } from '@/stores/useTimelineStore';
-import { getSharedCurve } from './Trajectory';
+import { getSharedCurve } from '@/utils/sharedCurve';
 
 // ── Constants ───────────────────────────────────────────────────────────
 

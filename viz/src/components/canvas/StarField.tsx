@@ -78,62 +78,89 @@ const fragmentShader = /* glsl */ `
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
-/** Generate a random point uniformly distributed in a sphere. */
-function randomInSphere(radius: number): [number, number, number] {
-  // Rejection sampling for uniform distribution
-  let x: number, y: number, z: number;
-  do {
-    x = (Math.random() - 0.5) * 2;
-    y = (Math.random() - 0.5) * 2;
-    z = (Math.random() - 0.5) * 2;
-  } while (x * x + y * y + z * z > 1);
-  return [x * radius, y * radius, z * radius];
-}
-
 function hexToVec3(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16);
   return [((n >> 16) & 0xff) / 255, ((n >> 8) & 0xff) / 255, (n & 0xff) / 255];
 }
+
+// ── Pre-computed star data (module-level, runs once at import time) ──────
+
+/**
+ * Simple seeded PRNG (mulberry32) for deterministic star placement.
+ * Using a seeded generator instead of Math.random keeps the render pure.
+ */
+function mulberry32(seed: number): () => number {
+  let s = seed | 0;
+  return () => {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const rng = mulberry32(42);
+
+interface StarBuffers {
+  positions: Float32Array;
+  colors: Float32Array;
+  phases: Float32Array;
+  sizes: Float32Array;
+}
+
+function generateStarBuffers(): StarBuffers {
+  const positions = new Float32Array(STAR_COUNT * 3);
+  const colors = new Float32Array(STAR_COUNT * 3);
+  const phases = new Float32Array(STAR_COUNT);
+  const sizes = new Float32Array(STAR_COUNT);
+
+  for (let i = 0; i < STAR_COUNT; i++) {
+    // Position — rejection sampling in sphere with seeded RNG
+    let x: number, y: number, z: number;
+    do {
+      x = (rng() - 0.5) * 2;
+      y = (rng() - 0.5) * 2;
+      z = (rng() - 0.5) * 2;
+    } while (x * x + y * y + z * z > 1);
+    positions[i * 3] = x * SPHERE_RADIUS;
+    positions[i * 3 + 1] = y * SPHERE_RADIUS;
+    positions[i * 3 + 2] = z * SPHERE_RADIUS;
+
+    // Color from random temperature
+    const temp = TEMP_MIN + rng() * (TEMP_MAX - TEMP_MIN);
+    const [r, g, b] = hexToVec3(temperatureToColor(temp));
+    colors[i * 3] = r;
+    colors[i * 3 + 1] = g;
+    colors[i * 3 + 2] = b;
+
+    // Random twinkle phase (0-1)
+    phases[i] = rng();
+
+    // Random size with a few brighter stars
+    const roll = rng();
+    if (roll > 0.995) {
+      sizes[i] = 3.0 + rng() * 2.0;
+    } else if (roll > 0.97) {
+      sizes[i] = 1.5 + rng() * 1.5;
+    } else {
+      sizes[i] = 0.4 + rng() * 1.1;
+    }
+  }
+
+  return { positions, colors, phases, sizes };
+}
+
+/** Pre-computed at module load — no Math.random during React render. */
+const STAR_BUFFERS = generateStarBuffers();
 
 // ── Component ───────────────────────────────────────────────────────────
 
 export function StarField() {
   const materialRef = useRef<THREE.ShaderMaterial>(null!);
 
-  // Build all buffers once
+  // Build Three.js objects from pre-computed buffers (pure, deterministic)
   const { geometry, material } = useMemo(() => {
-    const positions = new Float32Array(STAR_COUNT * 3);
-    const colors = new Float32Array(STAR_COUNT * 3);
-    const phases = new Float32Array(STAR_COUNT);
-    const sizes = new Float32Array(STAR_COUNT);
-
-    for (let i = 0; i < STAR_COUNT; i++) {
-      // Position
-      const [x, y, z] = randomInSphere(SPHERE_RADIUS);
-      positions[i * 3] = x;
-      positions[i * 3 + 1] = y;
-      positions[i * 3 + 2] = z;
-
-      // Color from random temperature
-      const temp = TEMP_MIN + Math.random() * (TEMP_MAX - TEMP_MIN);
-      const [r, g, b] = hexToVec3(temperatureToColor(temp));
-      colors[i * 3] = r;
-      colors[i * 3 + 1] = g;
-      colors[i * 3 + 2] = b;
-
-      // Random twinkle phase (0-1)
-      phases[i] = Math.random();
-
-      // Random size with a few brighter stars
-      const roll = Math.random();
-      if (roll > 0.995) {
-        sizes[i] = 3.0 + Math.random() * 2.0; // very bright
-      } else if (roll > 0.97) {
-        sizes[i] = 1.5 + Math.random() * 1.5; // bright
-      } else {
-        sizes[i] = 0.4 + Math.random() * 1.1; // normal
-      }
-    }
+    const { positions, colors, phases, sizes } = STAR_BUFFERS;
 
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));

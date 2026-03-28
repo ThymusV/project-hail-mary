@@ -83,7 +83,7 @@ const fragmentShader = /* glsl */ `
 export function Trajectory() {
   const materialRef = useRef<THREE.ShaderMaterial>(null!);
 
-  const { geometry, material, curve } = useMemo(() => {
+  const { geometry, material } = useMemo(() => {
     // Build spline
     const spline = new THREE.CatmullRomCurve3(WAYPOINTS, false, 'centripetal', 0.5);
 
@@ -141,7 +141,7 @@ export function Trajectory() {
       side: THREE.DoubleSide,
     });
 
-    return { geometry: tubeGeo, material: mat, curve: spline };
+    return { geometry: tubeGeo, material: mat };
   }, []);
 
   useFrame(({ clock }) => {
@@ -152,22 +152,9 @@ export function Trajectory() {
     materialRef.current.uniforms.uTime.value = clock.elapsedTime;
   });
 
-  // Export curve for other components
   return (
     <mesh geometry={geometry} frustumCulled={false}>
       <primitive object={material} ref={materialRef} attach="material" />
     </mesh>
   );
-}
-
-// ── Shared curve for Spacecraft positioning ─────────────────────────────
-
-/** Singleton spline for use by Spacecraft component. */
-let _sharedCurve: THREE.CatmullRomCurve3 | null = null;
-
-export function getSharedCurve(): THREE.CatmullRomCurve3 {
-  if (!_sharedCurve) {
-    _sharedCurve = new THREE.CatmullRomCurve3(WAYPOINTS, false, 'centripetal', 0.5);
-  }
-  return _sharedCurve;
 }
