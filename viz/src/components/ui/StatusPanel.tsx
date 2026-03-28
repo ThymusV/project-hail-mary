@@ -127,7 +127,7 @@ const S = {
     background: 'rgba(10, 10, 30, 0.65)',
     backdropFilter: 'blur(20px)',
     WebkitBackdropFilter: 'blur(20px)',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
+    borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 16,
     padding: 16,
     pointerEvents: 'auto',
@@ -150,7 +150,7 @@ const S = {
     height: 1,
     background: 'rgba(255, 255, 255, 0.06)',
     margin: 0,
-    border: 'none',
+    borderWidth: 0, borderStyle: 'none', borderColor: 'transparent',
   } satisfies CSSProperties,
 
   label: {
@@ -211,7 +211,7 @@ const S = {
     fontWeight: 500,
     color: 'rgba(255, 255, 255, 0.65)',
     background: 'rgba(255, 255, 255, 0.05)',
-    border: '1px solid rgba(255, 255, 255, 0.06)',
+    borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 999,
     padding: '2px 8px',
     lineHeight: 1.3,

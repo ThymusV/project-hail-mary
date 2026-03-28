@@ -65,7 +65,7 @@ const S = {
     backdropFilter: 'blur(20px)',
     WebkitBackdropFilter: 'blur(20px)',
     borderRadius: '0 0 12px 12px',
-    border: '1px solid rgba(255, 255, 255, 0.04)',
+    borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(255, 255, 255, 0.04)',
     borderTop: 'none',
     transition: 'opacity 350ms ease-out',
     pointerEvents: 'none',
