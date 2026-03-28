@@ -35,97 +35,116 @@
 - [x] Fix: camera as pure function of progress
 - [x] Fix: reorder phases (data → engine → visuals)
 - [x] Codex review round 2 (2 MAJOR, 2 MEDIUM resolved)
-- [ ] User confirmation
+- [x] User confirmation
 
 ---
 
 ## Phase 1: Data Schema & Engine Core
 
 ### M1.1 - Project Bootstrap
-- [ ] `npm create vite@latest` with react-ts template
-- [ ] Install core deps (three, R3F, drei, postprocessing, gsap, zustand, zod)
-- [ ] Install dev deps (leva, vitest, @types/three)
-- [ ] Configure vite.config.ts, tsconfig.json
-- [ ] Create base App.tsx with `<Canvas>` placeholder
-- [ ] Verify dev server starts
+- [x] `npm create vite@latest` with react-ts template
+- [x] Install core deps (three, R3F, drei, postprocessing, gsap, zustand, zod)
+- [x] Install dev deps (leva, vitest, @types/three)
+- [x] Configure vite.config.ts, tsconfig.json
+- [x] Create base App.tsx with `<Canvas>` placeholder
+- [x] Verify dev server starts
 
 ### M1.2 - Data Schema & Validation
-- [ ] Define Zod schema: CoordinateFrame enum
-- [ ] Define Zod schema: Event (id, chronologicalTime, narrativeIndex, chapter, sceneId, frameId, position, actors, description, importance)
-- [ ] Define Zod schema: Segment (id, startTime, endTime, sceneId, frameId, progressWeight, interpolation)
-- [ ] Define Zod schema: Scene (id, frameId, visibleBodies, labelConfig, nearFar)
-- [ ] Define Zod schema: CameraShot (id, sceneId, startChronoTime, endChronoTime, keyframes[]) -- anchored to chronologicalTime, NOT storyProgress
-- [ ] Generate TypeScript types from Zod schemas
-- [ ] Write timeline.json: 85 events with all required fields
-- [ ] Write timeline.json: segments with progressWeight (transit=low, dense events=high)
-- [ ] Write timeline.json: 7 scenes (EarthDeparture, Interstellar, TauCeti, Encounter, Adrian, Rescue, Eridian)
-- [ ] Write timeline.json: camera shots anchored to chronologicalTime for all scenes
-- [ ] Validation pipeline: loadTimeline() → Zod parse → typed data
-- [ ] Unit tests: valid data passes, invalid data fails with clear errors
-- [ ] Unit tests: event ordering (chronological monotonic)
-- [ ] Unit tests: every event references a valid scene
+- [x] Define Zod schema: CoordinateFrame enum
+- [x] Define Zod schema: Event (id, chronologicalTime, narrativeIndex, chapter, sceneId, frameId, position, actors, description, importance)
+- [x] Define Zod schema: Segment (id, startTime, endTime, sceneId, frameId, progressWeight, interpolation)
+- [x] Define Zod schema: Scene (id, frameId, visibleBodies, labelConfig, nearFar)
+- [x] Define Zod schema: CameraShot (id, sceneId, startChronoTime, endChronoTime, keyframes[]) -- anchored to chronologicalTime, NOT storyProgress
+- [x] Generate TypeScript types from Zod schemas
+- [x] Write timeline.json: 85 events with all required fields
+- [x] Write timeline.json: segments with progressWeight (transit=low, dense events=high)
+- [x] Write timeline.json: 7 scenes (EarthDeparture, Interstellar, TauCeti, Encounter, Adrian, Rescue, Eridian)
+- [x] Write timeline.json: camera shots anchored to chronologicalTime for all scenes
+- [x] Validation pipeline: loadTimeline() → Zod parse → typed data
+- [x] Unit tests: valid data passes, invalid data fails with clear errors
+- [x] Unit tests: event ordering (chronological monotonic)
+- [x] Unit tests: every event references a valid scene
 
 ### M1.3 - Coordinate Frame Architecture
-- [ ] Define CoordinateFrame configs: interstellar (1u=1ly, near=0.01, far=500)
-- [ ] Define CoordinateFrame configs: system (1u=0.01AU, near=0.001, far=100)
-- [ ] Define CoordinateFrame configs: encounter (1u=1m, near=0.1, far=1000)
-- [ ] Define CoordinateFrame configs: surface (1u=1m, near=0.1, far=5000)
-- [ ] Frame transform utilities (position transform between frames)
-- [ ] Unit tests: round-trip transforms, edge cases
+- [x] Define CoordinateFrame configs: interstellar (1u=1ly, near=0.01, far=500)
+- [x] Define CoordinateFrame configs: system (1u=0.01AU, near=0.001, far=100)
+- [x] Define CoordinateFrame configs: encounter (1u=1m, near=0.1, far=1000)
+- [x] Define CoordinateFrame configs: surface (1u=1m, near=0.1, far=5000)
+- [x] Frame transform utilities (position transform between frames)
+- [x] Unit tests: round-trip transforms, edge cases
 
 ### M1.4 - Timeline Engine
-- [ ] Non-linear progress mapping: storyProgress(0-1) ↔ chronologicalTime (driven by Segment.progressWeight)
-- [ ] Progress mapping reads progressWeight from segment data (no hardcoded compression rules)
-- [ ] Segments with low progressWeight compress transit; high progressWeight expand dense phases
-- [ ] Zustand store: storyProgress, chronologicalTime, isPlaying, playbackSpeed
-- [ ] Dual timeline: narrativeOrder vs chronologicalOrder as projections
-- [ ] resolveActiveState(progress) → { activeEvents, activeSegments, activeScene }
-- [ ] Unit tests: progress mapping, event resolution, ordering toggle
+- [x] Non-linear progress mapping: storyProgress(0-1) ↔ chronologicalTime (driven by Segment.progressWeight)
+- [x] Progress mapping reads progressWeight from segment data (no hardcoded compression rules)
+- [x] Segments with low progressWeight compress transit; high progressWeight expand dense phases
+- [x] Zustand store: storyProgress, chronologicalTime, isPlaying, playbackSpeed
+- [x] Dual timeline: narrativeOrder vs chronologicalOrder as projections
+- [x] resolveActiveState(progress) → { activeEvents, activeSegments, activeScene }
+- [x] Unit tests: progress mapping, event resolution, ordering toggle
 
 ### M1.5 - Camera Interpolation Engine
-- [ ] CameraKeyframe type: { progress, position, target, fov, easing }
-- [ ] Pure function: interpolateCamera(progress, keyframes[]) → CameraState
-- [ ] CatmullRomCurve3 for position path, quaternion slerp for rotation
-- [ ] GSAP smoothing wrapper: smoothSeek(fromProgress, toProgress) → animation
-- [ ] CameraControls integration: handoff to orbit when paused, resume on play
-- [ ] Unit tests: interpolation correctness, boundary conditions
+- [x] CameraKeyframe type: { progress, position, target, fov, easing }
+- [x] Pure function: interpolateCamera(progress, keyframes[]) → CameraState
+- [x] CatmullRomCurve3 for position path, quaternion slerp for rotation
+- [x] GSAP smoothing wrapper: smoothSeek(fromProgress, toProgress) → animation
+- [x] CameraControls integration: handoff to orbit when paused, resume on play
+- [x] Unit tests: interpolation correctness, boundary conditions
 
 ---
 
 ## Phase 2: Minimal Visual Slice
 
 ### M2.1 - Scene Infrastructure
-- [ ] SceneRouter.tsx: conditionally render scene by activeScene from store
-- [ ] Canvas config: dynamic near/far from active coordinate frame
-- [ ] Scene transition: fade-to-black between frame switches
+- [x] SceneRouter.tsx: conditionally render scene by activeScene from store
+- [x] Canvas config: dynamic near/far from active coordinate frame
+- [x] Scene transition: fade-to-black between frame switches
 
 ### M2.2 - Interstellar Scene
-- [ ] StarField.tsx: InstancedMesh with baked matrices (set once in useEffect)
-- [ ] Star color: temperature mapping in shader (vertex color attribute)
-- [ ] Star twinkle: shader-driven opacity animation (no JS per-frame updates)
-- [ ] Key stars: Sol, Tau Ceti, 40 Eridani as larger labeled spheres
-- [ ] Trajectory.tsx: CatmullRomCurve3, multi-path (Sol→TC, TC→40Eri)
-- [ ] Spacecraft.tsx: cone on curve, position = f(storyProgress)
+- [x] StarField.tsx: InstancedMesh with baked matrices (set once in useEffect)
+- [x] Star color: temperature mapping in shader (vertex color attribute)
+- [x] Star twinkle: shader-driven opacity animation (no JS per-frame updates)
+- [x] Key stars: Sol, Tau Ceti, 40 Eridani as larger labeled spheres
+- [x] Trajectory.tsx: CatmullRomCurve3, multi-path (Sol→TC, TC→40Eri)
+- [x] Spacecraft.tsx: cone on curve, position = f(storyProgress)
 
 ### M2.3 - Timeline UI
-- [ ] TimelineSlider.tsx: non-linear scrub bar, event markers
-- [ ] Play/pause, speed controls (1x/10x/100x)
-- [ ] Current event label + mission day/year display
-- [ ] Keyboard shortcuts (arrows, spacebar)
-- [ ] Chapter/scene markers for quick jump
+- [x] TimelineSlider.tsx: non-linear scrub bar, event markers
+- [x] Play/pause, speed controls (1x/10x/100x)
+- [x] Current event label + mission day/year display
+- [x] Keyboard shortcuts (arrows, spacebar)
+- [x] Chapter/scene markers for quick jump
 
 ### M2.4 - Camera Rig
-- [ ] CameraRig.tsx: reads progress, calls interpolateCamera, applies to camera
-- [ ] GSAP smoothing on seekToEvent jumps
-- [ ] CameraControls handoff when paused
-- [ ] Verify: forward, reverse, rapid seek, timeline toggle
+- [x] CameraRig.tsx: reads progress, calls interpolateCamera, applies to camera
+- [x] GSAP smoothing on seekToEvent jumps
+- [x] CameraControls handoff when paused
+- [x] Verify: forward, reverse, rapid seek, timeline toggle
 
 ### M2.5 - Post-Processing
-- [ ] Effects.tsx: EffectComposer, Bloom, ToneMapping
-- [ ] Selective bloom (emissive >1 on stars/trajectory)
-- [ ] Leva controls for tuning
+- [x] Effects.tsx: EffectComposer, Bloom, ToneMapping
+- [x] Selective bloom (emissive >1 on stars/trajectory)
+- [x] Leva controls for tuning
 
 **Gate: full vertical slice works**
+
+---
+
+## Phase 2.5: User Feedback Fixes
+
+- [x] Multi-segment trajectory with story-accurate path (outbound/return/rescue/reunion)
+- [x] Each segment has distinct color (blue #4488ff / cyan #44ddff / red #ff6644 / gold #ffaa33)
+- [x] Separation and reunion point markers with glow animation
+- [x] Iconic markers: Earth (blue sphere+ring at Sol), Target A (orange, follows own path)
+- [x] Ship scale increased 0.15 → 0.3 for visibility
+- [x] Billboard labels: text always faces camera via Drei Billboard
+- [x] Dual damping camera: PLAYING_DAMP=8 (fast tracking), PAUSED_DAMP=4 (smooth orbit)
+- [x] CameraControls replaces OrbitControls for smooth scroll wheel interpolation
+- [x] Camera recenter button (R key) with smooth CameraControls.setLookAt transition
+- [x] Playback slowed: BASE_RATE 1/60 → 1/120 (120s full playback at 1x)
+- [x] Manual event navigation: prev/next buttons (⏮/⏭) with J/K keys and Alt+arrows
+- [x] Floating EventSynopsis: glassmorphism Html cards at event 3D positions
+- [x] StatusPanel: left-side metrics (distance, mission day, fuel, characters, chapter)
+- [x] HelpOverlay updated with all new shortcuts
 
 ---
 
