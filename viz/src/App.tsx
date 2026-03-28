@@ -93,7 +93,8 @@ function SceneContent({
 
 export default function App() {
   const data = useTimelineData();
-  const cameraShots = (timelineRaw as { cameraShots: CameraShot[] }).cameraShots;
+  // JSON arrays are number[], cast to the tuple types CameraShot expects
+  const cameraShots = (timelineRaw.cameraShots as unknown as CameraShot[]);
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#030308' }}>

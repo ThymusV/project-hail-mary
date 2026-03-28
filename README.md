@@ -1,5 +1,11 @@
 # Project Hail Mary - Interactive 3D Space-Time Visualization
 
+> **Disclaimer / 免责声明**: This is a toy project built for fun by AI agents (Claude + Codex). It has no practical reference value and should not be taken seriously. The astronomical data, story timeline, and spatial positions are approximations for visual effect only.
+>
+> 这是一个纯粹做着玩的项目，由 AI Agent (Claude + Codex) 全程开发。没有任何实际参考价值，天文数据、故事时间线和空间位置均为近似值，仅供视觉效果展示。
+
+**[Live Demo](https://caldis.github.io/project-hail-mary/)**
+
 An interactive WebGL visualization of the novel *Project Hail Mary* (挽救计划) by Andy Weir, depicting protagonist Ryland Grace's journey through the cosmos in a navigable 3D space-time environment.
 
 ## Overview

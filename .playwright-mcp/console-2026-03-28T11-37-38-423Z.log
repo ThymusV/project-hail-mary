@@ -1,0 +1,170 @@
+[     195ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:5173/@vite/client:509
+[   37166ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[   37427ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[   37452ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[   37707ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[   38081ms] TypeError: Cannot read properties of null (reading 'alpha')
+    at EffectComposer.addPass (http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:1054:61)
+    at http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:15401:26
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:7488:28)
+    at B (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:2433:90)
+    at ca (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5308:80)
+    at Pf (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5296:20)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5578:26)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5645:15)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+[   38085ms] TypeError: Cannot read properties of null (reading 'alpha')
+    at EffectComposer.addPass (http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:1054:61)
+    at http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:15401:26
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:7488:28)
+    at B (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:2433:90)
+    at ca (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5308:80)
+    at Pf (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5296:20)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5578:26)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5645:15)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+[   38085ms] [WARNING] %s
+
+%s
+ An error occurred in the <CanvasImpl> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/@vite/client:509
+[   42948ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:5173/@vite/client:509
+[   44040ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[   45627ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[   45720ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[   45764ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[   45895ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[   46202ms] TypeError: Cannot read properties of null (reading 'alpha')
+    at EffectComposer.addPass (http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:1054:61)
+    at http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:15401:26
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:7488:28)
+    at B (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:2433:90)
+    at ca (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5308:80)
+    at Pf (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5296:20)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5578:26)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5645:15)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+[   46205ms] TypeError: Cannot read properties of null (reading 'alpha')
+    at EffectComposer.addPass (http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:1054:61)
+    at http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:15401:26
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:7488:28)
+    at B (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:2433:90)
+    at ca (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5308:80)
+    at Pf (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5296:20)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5578:26)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5645:15)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+[   46205ms] [WARNING] %s
+
+%s
+ An error occurred in the <CanvasImpl> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/@vite/client:509
+[   56206ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:5173/@vite/client:509
+[   74348ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:5173/@vite/client:509
+[  122558ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[  122963ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[  124001ms] TypeError: Cannot read properties of null (reading 'alpha')
+    at EffectComposer.addPass (http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:1054:61)
+    at http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:15401:26
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:7488:28)
+    at B (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:2433:90)
+    at ca (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5308:80)
+    at Pf (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5296:20)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5578:26)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5645:15)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+[  124005ms] TypeError: Cannot read properties of null (reading 'alpha')
+    at EffectComposer.addPass (http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:1054:61)
+    at http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:15401:26
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:7488:28)
+    at B (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:2433:90)
+    at ca (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5308:80)
+    at Pf (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5296:20)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5578:26)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5645:15)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+[  124006ms] [WARNING] %s
+
+%s
+ An error occurred in the <CanvasImpl> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/@vite/client:509
+[  131948ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:5173/@vite/client:509
+[  136081ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:5173/@vite/client:509
+[  158741ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:5173/@vite/client:509
+[  164881ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:5173/@vite/client:509
+[  176598ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:5173/@vite/client:509
+[  185700ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:5173/@vite/client:509
+[  208602ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:5173/@vite/client:509
+[  220365ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:5173/@vite/client:509
+[  226838ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:5173/@vite/client:509
+[  271533ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[  271795ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[  272444ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[  274090ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[  275082ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[  275101ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[  275116ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[  276305ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[  279400ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[  280002ms] TypeError: Cannot read properties of null (reading 'alpha')
+    at EffectComposer.addPass (http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:1054:61)
+    at http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:15401:26
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:7488:28)
+    at B (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:2433:90)
+    at ca (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5308:80)
+    at Pf (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5296:20)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5578:26)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5645:15)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+[  280006ms] TypeError: Cannot read properties of null (reading 'alpha')
+    at EffectComposer.addPass (http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:1054:61)
+    at http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:15401:26
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:7488:28)
+    at B (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:2433:90)
+    at ca (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5308:80)
+    at Pf (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5296:20)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5578:26)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5645:15)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+[  280007ms] [WARNING] %s
+
+%s
+ An error occurred in the <CanvasImpl> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/@vite/client:509
+[  298488ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:5173/@vite/client:509
+[  299553ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[  303459ms] TypeError: Cannot read properties of null (reading 'alpha')
+    at EffectComposer.addPass (http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:1054:61)
+    at http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:15401:26
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:7488:28)
+    at B (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:2433:90)
+    at ca (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5308:80)
+    at Pf (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5296:20)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5578:26)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5645:15)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+[  303465ms] TypeError: Cannot read properties of null (reading 'alpha')
+    at EffectComposer.addPass (http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:1054:61)
+    at http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:15401:26
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:7488:28)
+    at B (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:2433:90)
+    at ca (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5308:80)
+    at Pf (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5296:20)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5578:26)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5645:15)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+[  303466ms] [WARNING] %s
+
+%s
+ An error occurred in the <CanvasImpl> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/@vite/client:509

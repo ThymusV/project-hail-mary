@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 
 export default defineConfig({
+  base: '/project-hail-mary/',
   plugins: [react()],
   resolve: {
     alias: {
@@ -12,5 +13,6 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 1000,
     target: 'esnext',
+    outDir: 'dist',
   },
 })

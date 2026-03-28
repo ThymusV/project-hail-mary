@@ -1,0 +1,32 @@
+[     386ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:5173/@vite/client:509
+[    1480ms] [WARNING] THREE.Color: Alpha component of rgba(200,200,220,0.8) will be ignored. @ http://localhost:5173/@vite/client:509
+[    1882ms] [WARNING] THREE.Color: Alpha component of rgba(200,200,220,0.8) will be ignored. @ http://localhost:5173/@vite/client:509
+[    4884ms] [ERROR] %s a style property during rerender (%s) when a conflicting property is set (%s) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value; instead, replace the shorthand with separate values. Removing borderColor border @ http://localhost:5173/@vite/client:509
+[    9113ms] TypeError: Cannot read properties of null (reading 'alpha')
+    at EffectComposer.addPass (http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:1054:61)
+    at http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:15401:26
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:7488:28)
+    at B (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:2433:90)
+    at ca (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5308:80)
+    at Pf (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5296:20)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5578:26)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5645:15)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+[    9116ms] TypeError: Cannot read properties of null (reading 'alpha')
+    at EffectComposer.addPass (http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:1054:61)
+    at http://localhost:5173/node_modules/.vite/deps/@react-three_postprocessing.js?v=49a48f15:15401:26
+    at Object.react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:7488:28)
+    at B (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:2433:90)
+    at ca (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5308:80)
+    at Pf (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5296:20)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5578:26)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+    at yn (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5645:15)
+    at rt (http://localhost:5173/node_modules/.vite/deps/react-three-fiber.esm-DLomctsd.js?v=49a48f15:5941:63)
+[    9116ms] [WARNING] %s
+
+%s
+ An error occurred in the <CanvasImpl> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/@vite/client:509
+[   30134ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:5173/@vite/client:509

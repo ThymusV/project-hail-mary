@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TimelineDataSchema, validateTimeline } from '../timeline.schema';
+import { TimelineDataSchema } from '../timeline.schema';
 import data from '../../data/timeline.json';
 
 describe('timeline.json data validation', () => {

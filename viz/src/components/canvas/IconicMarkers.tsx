@@ -200,16 +200,19 @@ function TargetATrajectory() {
     return { geometry: geo, material: mat };
   }, []);
 
-  const lineRef = useRef<THREE.Line>(null!);
+  const lineObj = useMemo(() => {
+    const l = new THREE.Line(geometry, material);
+    l.visible = false;
+    l.frustumCulled = false;
+    return l;
+  }, [geometry, material]);
 
   useFrame(() => {
-    if (!lineRef.current) return;
     const progress = useTimelineStore.getState().storyProgress;
-    // Show path after Target A appears
-    lineRef.current.visible = progress > 0.35;
+    lineObj.visible = progress > 0.35;
   });
 
-  return <line ref={lineRef} geometry={geometry} material={material} visible={false} />;
+  return <primitive object={lineObj} />;
 }
 
 // ── Composite ───────────────────────────────────────────────────────────

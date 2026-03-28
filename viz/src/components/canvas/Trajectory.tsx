@@ -17,7 +17,7 @@ import { useFrame } from '@react-three/fiber';
 import { useTimelineStore } from '@/stores/useTimelineStore';
 import {
   getSegmentCurves,
-  getSegmentAtProgress,
+
   TRAJECTORY_SEGMENTS,
 } from '@/utils/sharedCurve';
 

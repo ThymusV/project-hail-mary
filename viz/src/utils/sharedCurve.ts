@@ -141,7 +141,7 @@ const COMPOSITE_SAMPLES = 200;
 export function getSharedCurve(): THREE.CatmullRomCurve3 {
   if (!_sharedCurve) {
     const curves = getSegmentCurves();
-    const ranges = getSegmentRanges();
+    getSegmentRanges(); // ensure ranges are computed
     const points: THREE.Vector3[] = [];
 
     for (let i = 0; i <= COMPOSITE_SAMPLES; i++) {
