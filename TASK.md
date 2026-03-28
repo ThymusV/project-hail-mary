@@ -34,7 +34,7 @@
 - [x] Fix: non-linear time mapping with dual timeline
 - [x] Fix: camera as pure function of progress
 - [x] Fix: reorder phases (data → engine → visuals)
-- [~] Codex review round 2
+- [x] Codex review round 2 (2 MAJOR, 2 MEDIUM resolved)
 - [ ] User confirmation
 
 ---
@@ -52,14 +52,14 @@
 ### M1.2 - Data Schema & Validation
 - [ ] Define Zod schema: CoordinateFrame enum
 - [ ] Define Zod schema: Event (id, chronologicalTime, narrativeIndex, chapter, sceneId, frameId, position, actors, description, importance)
-- [ ] Define Zod schema: Segment (id, startTime, endTime, sceneId, frameId, interpolation)
+- [ ] Define Zod schema: Segment (id, startTime, endTime, sceneId, frameId, progressWeight, interpolation)
 - [ ] Define Zod schema: Scene (id, frameId, visibleBodies, labelConfig, nearFar)
-- [ ] Define Zod schema: CameraShot (id, sceneId, startProgress, endProgress, keyframes[])
+- [ ] Define Zod schema: CameraShot (id, sceneId, startChronoTime, endChronoTime, keyframes[]) -- anchored to chronologicalTime, NOT storyProgress
 - [ ] Generate TypeScript types from Zod schemas
 - [ ] Write timeline.json: 85 events with all required fields
-- [ ] Write timeline.json: transit/encounter/breeding segments
-- [ ] Write timeline.json: 7 scenes with coordinate frames
-- [ ] Write timeline.json: camera shots for all scenes
+- [ ] Write timeline.json: segments with progressWeight (transit=low, dense events=high)
+- [ ] Write timeline.json: 7 scenes (EarthDeparture, Interstellar, TauCeti, Encounter, Adrian, Rescue, Eridian)
+- [ ] Write timeline.json: camera shots anchored to chronologicalTime for all scenes
 - [ ] Validation pipeline: loadTimeline() → Zod parse → typed data
 - [ ] Unit tests: valid data passes, invalid data fails with clear errors
 - [ ] Unit tests: event ordering (chronological monotonic)
@@ -74,9 +74,9 @@
 - [ ] Unit tests: round-trip transforms, edge cases
 
 ### M1.4 - Timeline Engine
-- [ ] Non-linear progress mapping: storyProgress(0-1) ↔ chronologicalTime
-- [ ] Semantic compression: transit phases get less progress-space per time-unit
-- [ ] Dense event phases get more progress-space per time-unit
+- [ ] Non-linear progress mapping: storyProgress(0-1) ↔ chronologicalTime (driven by Segment.progressWeight)
+- [ ] Progress mapping reads progressWeight from segment data (no hardcoded compression rules)
+- [ ] Segments with low progressWeight compress transit; high progressWeight expand dense phases
 - [ ] Zustand store: storyProgress, chronologicalTime, isPlaying, playbackSpeed
 - [ ] Dual timeline: narrativeOrder vs chronologicalOrder as projections
 - [ ] resolveActiveState(progress) → { activeEvents, activeSegments, activeScene }
@@ -153,7 +153,7 @@
 - [ ] Beetle probe launch (4 trajectories)
 - [ ] Radar sweep visualization
 - [ ] Turnaround + approach trajectory
-- [ ] Frame transition: encounter → interstellar → encounter
+- [ ] Frame cut (fade-to-black) between interstellar and encounter
 
 ### M3.5 - 40 Eridani Scene
 - [ ] Triple star system

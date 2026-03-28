@@ -23,7 +23,7 @@ Build a browser-based interactive 3D space-time visualization of *Project Hail M
 - [x] Fix: non-linear time mapping with dual timeline projections
 - [x] Fix: camera as pure function of progress, GSAP scoped to smoothing
 - [x] Fix: reorder phases (data → engine → visuals)
-- [ ] Codex review round 2 -- validate fixes
+- [x] Codex review round 2 -- 0 critical, 2 major + 2 medium resolved
 - [ ] User confirmation of final plan
 
 ---
@@ -39,10 +39,12 @@ Build a browser-based interactive 3D space-time visualization of *Project Hail M
 
 ### M1.2 - Data Schema & Validation
 - Define Zod schemas for: Event, Segment, Scene, CameraShot, CoordinateFrame
+- Segment schema includes `progressWeight` (controls scrubber compression per segment)
+- CameraShot anchored to `chronologicalTime` ranges (projection-independent)
 - Define TypeScript interfaces derived from Zod schemas
 - Write `timeline.json` with all 85 events + segments + 7 scenes
 - Validation pipeline: load JSON → Zod parse → typed data
-- Unit tests: schema validation, event ordering, scene coverage
+- Unit tests: schema validation, event ordering, scene coverage, progressWeight normalization
 
 ### M1.3 - Coordinate Frame Architecture
 - Define 4 frames: interstellar (1u=1ly), system (1u=0.01AU), encounter (1u=1m), surface (1u=1m)
@@ -123,11 +125,11 @@ Build a browser-based interactive 3D space-time visualization of *Project Hail M
 - Connection tunnel between ships (217m distance)
 - Sampling chain descent to Adrian (91km)
 
-### M3.4 - Rescue Scene (frame: encounter → interstellar)
+### M3.4 - Rescue Scene (frame: interstellar → encounter)
 - Beetle probe launch trajectories (4 probes)
 - Search radar sweep visualization
 - Grace's turnaround + approach to disabled Target A
-- Scale transition from encounter back to interstellar
+- Frame cut (fade-to-black) from interstellar to encounter for rescue approach
 
 ### M3.5 - 40 Eridani Scene (frame: system → surface)
 - Triple star system (40 Eridani A/B/C)
@@ -196,16 +198,17 @@ Build a browser-based interactive 3D space-time visualization of *Project Hail M
 | Camera | Pure function of progress | Scrub, reverse, seek all work without GSAP state conflicts |
 | Stars | Baked InstancedMesh | Set matrices once, animate via shaders; no per-frame JS updates |
 
-## Scene-State Matrix
+## Scene-State Matrix (7 scenes)
 
-| Scene | Frame | Visible Bodies | Camera Mode | Scrub Behavior | Labels |
-|-------|-------|---------------|-------------|----------------|--------|
-| Earth Departure | system | Sun, Earth, ISS, ship | Pull-back orbit | Dense (many events) | Earth, ISS, ship |
-| Interstellar Transit | interstellar | Star field, trajectory, ship | Follow ship along curve | Compressed (years pass) | Key stars, distance |
-| Tau Ceti Approach | system | Tau Ceti, planets, Adrian | Fly-in to orbit | Medium density | Star, planets |
-| Encounter with Rocky | encounter | Hail Mary, Target A, tunnel | Orbit around ships | Dense (daily events) | Ship names, tunnel |
-| Rescue Search | interstellar→encounter | Star field → Target A | Wide search → approach | Medium | Radar, distance |
-| 40 Eridani Settlement | system→surface | Triple star, Eridian b, dome | Orbit → surface landing | Sparse (16 years summary) | Star, planet, dome |
+| Scene | Frame | Visible Bodies | Camera Mode | Scrub Behavior | Transition In |
+|-------|-------|---------------|-------------|----------------|---------------|
+| Earth Departure | system | Sun, Earth, ISS, ship | Pull-back orbit | Dense (many events) | -- (initial) |
+| Interstellar Transit | interstellar | Star field, trajectory, ship | Follow ship along curve | Compressed (low progressWeight) | Fade from Earth |
+| Tau Ceti Approach | system | Tau Ceti, planets, Adrian | Fly-in to orbit | Medium density | Fade from interstellar |
+| Encounter with Rocky | encounter | Hail Mary, Target A, tunnel | Orbit around ships | Dense (daily events) | Fade from system |
+| Adrian Sampling | encounter | Adrian atmosphere, sampling chain | Follow chain descent | Dense (research events) | Fade from encounter |
+| Rescue Search | interstellar | Star field, radar sweep, Target A | Wide search pan | Medium | Fade from encounter |
+| 40 Eridani Settlement | system | Triple star, Eridian b, dome | Orbit to surface | Sparse (16-year summary) | Fade from interstellar |
 
 ## Agent Development Guidelines
 

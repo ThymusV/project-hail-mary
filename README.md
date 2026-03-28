@@ -44,7 +44,7 @@ The visualization uses **4 coordinate frames** to handle the 15-order-of-magnitu
 | `encounter` | 1 unit = 1 m | Ship-to-ship (217m), EVA, tunnel | 0.1 / 1000 |
 | `surface` | 1 unit = 1 m | Planet surface, habitat dome | 0.1 / 5000 |
 
-Each scene references its coordinate frame. Frame transitions are animated cuts, not continuous zooms.
+Each scene references its coordinate frame. Frame transitions are **animated cuts with visual dressing** (fade-to-black or crossfade), not continuous spatial zooms. The 3D scene graph is fully replaced when the frame changes; there is no attempt to continuously rescale between light-years and meters.
 
 ### Data Model
 
@@ -53,17 +53,17 @@ The timeline uses **4 entity types**, not just point events:
 | Type | Purpose | Example |
 |------|---------|---------|
 | `Event` | Instantaneous milestone | "Grace discovers Astrophage" |
-| `Segment` | Interval with start/end time | "Interstellar transit (4 years)" |
+| `Segment` | Interval with start/end, carries `progressWeight` for time compression | "Interstellar transit (4 years, low weight)" |
 | `Scene` | Rendering context + coordinate frame | "Tau Ceti System" |
-| `CameraShot` | Camera behavior over an interval | "Pull back from Earth to orbit" |
+| `CameraShot` | Camera behavior anchored to `chronologicalTime` (projection-independent) | "Pull back from Earth to orbit" |
 
 ### Timeline Model
 
 Events carry **two time axes**:
-- `chronologicalTime` -- monotonic physical story time (days from Petrova discovery)
+- `chronologicalTime` -- monotonic physical story time (days from Petrova discovery). This is the **stable anchor** for all data entities.
 - `narrativeIndex` -- chapter/section presentation order
 
-The scrubber operates on **story progress** (non-linear) by default, with semantic compression for transit phases. The dual-timeline toggle swaps the ordering projection, not the data.
+Segments carry a `progressWeight` field that controls how much scrubber-space they occupy (low weight = compressed transit, high weight = dense event clusters). The scrubber operates on **story progress** (non-linear) by default. The dual-timeline toggle swaps the ordering projection, not the data. CameraShots are anchored to `chronologicalTime` ranges, making them projection-independent.
 
 ### Camera State
 
@@ -96,13 +96,14 @@ src/
 ├── components/
 │   ├── canvas/                 # 3D components (inside <Canvas>)
 │   │   ├── SceneRouter.tsx     # Renders active scene based on store
-│   │   ├── scenes/             # One component per scene
-│   │   │   ├── InterstellarScene.tsx
-│   │   │   ├── SolSystemScene.tsx
-│   │   │   ├── TauCetiScene.tsx
-│   │   │   ├── EncounterScene.tsx
-│   │   │   ├── RescueScene.tsx
-│   │   │   └── EridianScene.tsx
+│   │   ├── scenes/             # One component per scene (7 scenes)
+│   │   │   ├── EarthDepartureScene.tsx   # Sol system, launch
+│   │   │   ├── InterstellarScene.tsx     # Star field, transit
+│   │   │   ├── TauCetiScene.tsx          # Tau Ceti system, orbit
+│   │   │   ├── EncounterScene.tsx        # Ship-to-ship, Rocky
+│   │   │   ├── AdrianScene.tsx           # Sampling, Taumoeba
+│   │   │   ├── RescueScene.tsx           # Beetle launch, search
+│   │   │   └── EridianScene.tsx          # 40 Eridani, settlement
 │   │   ├── StarField.tsx       # Instanced stars (baked once, shader-animated)
 │   │   ├── Trajectory.tsx      # Multi-path flight curve
 │   │   ├── Spacecraft.tsx      # Ship on trajectory
