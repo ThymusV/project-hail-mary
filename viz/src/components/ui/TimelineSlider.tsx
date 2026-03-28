@@ -124,6 +124,58 @@ const S = {
     transform: 'scale(1.05)',
   } satisfies CSSProperties,
 
+  /* ── Step prev / next buttons ───────────────────────────────────── */
+  stepBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: '50%',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    background: 'rgba(255, 255, 255, 0.04)',
+    color: 'rgba(255, 255, 255, 0.6)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    transition: 'all 200ms ease-out',
+    flexShrink: 0,
+    outline: 'none',
+    padding: 0,
+  } satisfies CSSProperties,
+
+  stepBtnHover: {
+    background: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.16)',
+    color: 'rgba(255, 255, 255, 0.9)',
+    transform: 'scale(1.08)',
+  } satisfies CSSProperties,
+
+  /* ── Recenter button ────────────────────────────────────────────── */
+  recenterBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: '50%',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    background: 'rgba(255, 255, 255, 0.04)',
+    color: 'rgba(255, 255, 255, 0.45)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    transition: 'all 200ms ease-out',
+    flexShrink: 0,
+    outline: 'none',
+    padding: 0,
+    marginLeft: 4,
+    position: 'relative',
+  } satisfies CSSProperties,
+
+  recenterBtnHover: {
+    background: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.16)',
+    color: 'rgba(255, 255, 255, 0.9)',
+    transform: 'scale(1.08)',
+  } satisfies CSSProperties,
+
   /* ── Speed selector ──────────────────────────────────────────────── */
   speedGroup: {
     display: 'flex',
@@ -258,6 +310,33 @@ const S = {
   tooltipVisible: {
     opacity: 1,
   } satisfies CSSProperties,
+
+  /* ── Mini tooltip (for recenter) ────────────────────────────────── */
+  miniTooltip: {
+    position: 'absolute',
+    bottom: '100%',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    marginBottom: 8,
+    padding: '4px 10px',
+    background: 'rgba(10, 10, 30, 0.92)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: 6,
+    fontSize: 11,
+    fontWeight: 500,
+    color: 'rgba(255, 255, 255, 0.8)',
+    whiteSpace: 'nowrap',
+    pointerEvents: 'none',
+    opacity: 0,
+    transition: 'opacity 200ms ease-out',
+    zIndex: 10,
+  } satisfies CSSProperties,
+
+  miniTooltipVisible: {
+    opacity: 1,
+  } satisfies CSSProperties,
 } as const;
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -281,6 +360,36 @@ function PauseIcon({ size = 14 }: { size?: number }) {
   );
 }
 
+function PrevIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <rect x="4" y="4" width="3" height="16" rx="1" />
+      <path d="M20 4v16l-11-8 11-8z" />
+    </svg>
+  );
+}
+
+function NextIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <rect x="17" y="4" width="3" height="16" rx="1" />
+      <path d="M4 4v16l11-8L4 4z" />
+    </svg>
+  );
+}
+
+function RecenterIcon({ size = 13 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <line x1="12" y1="2" x2="12" y2="6" />
+      <line x1="12" y1="18" x2="12" y2="22" />
+      <line x1="2" y1="12" x2="6" y2="12" />
+      <line x1="18" y1="12" x2="22" y2="12" />
+    </svg>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════════════
  * Component
  * ═══════════════════════════════════════════════════════════════════════ */
@@ -295,6 +404,9 @@ export function TimelineSlider() {
     setProgress,
     togglePlay,
     setSpeed,
+    stepToNextEvent,
+    stepToPrevEvent,
+    requestRecenter,
   } = useTimelineStore();
 
   const showInfoPanel = useUIStore((s) => s.showInfoPanel);
@@ -305,6 +417,9 @@ export function TimelineSlider() {
   const [isHovering, setIsHovering] = useState(false);
   const [hoveredMarkerId, setHoveredMarkerId] = useState<string | null>(null);
   const [playBtnHover, setPlayBtnHover] = useState(false);
+  const [prevBtnHover, setPrevBtnHover] = useState(false);
+  const [nextBtnHover, setNextBtnHover] = useState(false);
+  const [recenterHover, setRecenterHover] = useState(false);
   const [hoveredSpeed, setHoveredSpeed] = useState<number | null>(null);
   const trackRef = useRef<HTMLDivElement>(null);
 
@@ -314,6 +429,10 @@ export function TimelineSlider() {
   const earthYear = data.dayToYear(chronoTime);
   const currentScene = data.sceneAtProgress(storyProgress);
   const nearestEvt = data.nearestEvent(storyProgress);
+
+  /* ── Stable ref to eventsByProgress for keyboard handler ─────────── */
+  const eventsRef = useRef(data.eventsByProgress);
+  eventsRef.current = data.eventsByProgress;
 
   /* ── Progress from mouse position ────────────────────────────────── */
   const progressFromPointer = useCallback(
@@ -367,17 +486,42 @@ export function TimelineSlider() {
           break;
         case 'ArrowLeft':
           e.preventDefault();
-          setProgress(storyProgress - (e.shiftKey ? 0.05 : 0.01));
+          if (e.altKey) {
+            // Alt+Left: previous event
+            stepToPrevEvent(eventsRef.current);
+          } else {
+            setProgress(storyProgress - (e.shiftKey ? 0.05 : 0.005));
+          }
           break;
         case 'ArrowRight':
           e.preventDefault();
-          setProgress(storyProgress + (e.shiftKey ? 0.05 : 0.01));
+          if (e.altKey) {
+            // Alt+Right: next event
+            stepToNextEvent(eventsRef.current);
+          } else {
+            setProgress(storyProgress + (e.shiftKey ? 0.05 : 0.005));
+          }
+          break;
+        case 'KeyJ':
+          e.preventDefault();
+          stepToPrevEvent(eventsRef.current);
+          break;
+        case 'KeyK':
+          e.preventDefault();
+          stepToNextEvent(eventsRef.current);
+          break;
+        case 'KeyR':
+          // Don't intercept if any modifier is held (Ctrl+R = refresh, etc.)
+          if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+            e.preventDefault();
+            requestRecenter();
+          }
           break;
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [storyProgress, togglePlay, setProgress]);
+  }, [storyProgress, togglePlay, setProgress, stepToNextEvent, stepToPrevEvent, requestRecenter]);
 
   /* ── Track expansion state ───────────────────────────────────────── */
   const trackExpanded = isDragging || isHovering;
@@ -415,6 +559,25 @@ export function TimelineSlider() {
 
           {/* Center: playback controls */}
           <div style={S.controls}>
+            {/* Prev event */}
+            <button
+              style={{
+                ...S.stepBtn,
+                ...(prevBtnHover ? S.stepBtnHover : {}),
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                stepToPrevEvent(data.eventsByProgress);
+              }}
+              onMouseEnter={() => setPrevBtnHover(true)}
+              onMouseLeave={() => setPrevBtnHover(false)}
+              aria-label="Previous event"
+              title="Previous event (J)"
+            >
+              <PrevIcon />
+            </button>
+
+            {/* Play / Pause */}
             <button
               style={{
                 ...S.playBtn,
@@ -439,6 +602,24 @@ export function TimelineSlider() {
               >
                 {isPlaying ? <PauseIcon /> : <PlayIcon />}
               </div>
+            </button>
+
+            {/* Next event */}
+            <button
+              style={{
+                ...S.stepBtn,
+                ...(nextBtnHover ? S.stepBtnHover : {}),
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                stepToNextEvent(data.eventsByProgress);
+              }}
+              onMouseEnter={() => setNextBtnHover(true)}
+              onMouseLeave={() => setNextBtnHover(false)}
+              aria-label="Next event"
+              title="Next event (K)"
+            >
+              <NextIcon />
             </button>
 
             <div style={S.speedGroup}>
@@ -466,6 +647,32 @@ export function TimelineSlider() {
                 );
               })}
             </div>
+
+            {/* Recenter camera */}
+            <button
+              style={{
+                ...S.recenterBtn,
+                ...(recenterHover ? S.recenterBtnHover : {}),
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                requestRecenter();
+              }}
+              onMouseEnter={() => setRecenterHover(true)}
+              onMouseLeave={() => setRecenterHover(false)}
+              aria-label="Reset camera"
+            >
+              <RecenterIcon />
+              {/* Tooltip */}
+              <div
+                style={{
+                  ...S.miniTooltip,
+                  ...(recenterHover ? S.miniTooltipVisible : {}),
+                }}
+              >
+                Reset camera / 重置镜头 (R)
+              </div>
+            </button>
           </div>
 
           {/* Right: scene name */}

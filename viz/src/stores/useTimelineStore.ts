@@ -26,6 +26,10 @@ export interface TimelineState {
   /** Events at or near the current chronological time. */
   activeEventIds: string[];
 
+  // ── Camera recenter ─────────────────────────────────────────────
+  /** Monotonically incrementing id; CameraRig watches for changes. */
+  recenterRequestId: number;
+
   // ── Actions ──────────────────────────────────────────────────────
   setProgress: (p: number) => void;
   play: () => void;
@@ -38,6 +42,13 @@ export interface TimelineState {
   setActiveSceneId: (id: string | null) => void;
   setActiveSegmentId: (id: string | null) => void;
   setActiveEventIds: (ids: string[]) => void;
+
+  /** Step to next event (by progress). Requires eventsByProgress from data layer. */
+  stepToNextEvent: (eventsByProgress: Array<{ progress: number }>) => void;
+  /** Step to previous event (by progress). */
+  stepToPrevEvent: (eventsByProgress: Array<{ progress: number }>) => void;
+  /** Request a camera recenter (resets orbit back to cinematic track). */
+  requestRecenter: () => void;
 }
 
 export const useTimelineStore = create<TimelineState>((set) => ({
@@ -51,6 +62,7 @@ export const useTimelineStore = create<TimelineState>((set) => ({
   activeSceneId: null,
   activeSegmentId: null,
   activeEventIds: [],
+  recenterRequestId: 0,
 
   // ── Actions ──────────────────────────────────────────────────────
 
@@ -86,4 +98,28 @@ export const useTimelineStore = create<TimelineState>((set) => ({
   setActiveSegmentId: (id) => set({ activeSegmentId: id }),
 
   setActiveEventIds: (ids) => set({ activeEventIds: ids }),
+
+  stepToNextEvent: (eventsByProgress) =>
+    set((s) => {
+      const next = eventsByProgress.find((ep) => ep.progress > s.storyProgress + 0.001);
+      if (!next) return s;
+      return { storyProgress: Math.max(0, Math.min(1, next.progress)), isPlaying: false };
+    }),
+
+  stepToPrevEvent: (eventsByProgress) =>
+    set((s) => {
+      // Walk backwards to find the first event before current position
+      let prev: { progress: number } | undefined;
+      for (let i = eventsByProgress.length - 1; i >= 0; i--) {
+        if (eventsByProgress[i].progress < s.storyProgress - 0.001) {
+          prev = eventsByProgress[i];
+          break;
+        }
+      }
+      if (!prev) return s;
+      return { storyProgress: Math.max(0, Math.min(1, prev.progress)), isPlaying: false };
+    }),
+
+  requestRecenter: () =>
+    set((s) => ({ recenterRequestId: s.recenterRequestId + 1 })),
 }));

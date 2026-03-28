@@ -14,7 +14,7 @@ import { getSharedCurve } from '@/utils/sharedCurve';
 
 // ── Constants ───────────────────────────────────────────────────────────
 
-const SHIP_SCALE = 0.15;
+const SHIP_SCALE = 0.3;
 const TRAIL_COUNT = 24;
 const TRAIL_DECAY = 0.92;
 

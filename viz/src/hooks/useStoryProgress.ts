@@ -8,8 +8,8 @@
 import { useFrame } from '@react-three/fiber';
 import { useTimelineStore } from '@/stores/useTimelineStore';
 
-/** At 1x speed the full 0-1 range plays out in ~60 seconds. */
-const BASE_RATE = 1 / 60;
+/** At 1x speed the full 0-1 range plays out in ~120 seconds. */
+const BASE_RATE = 1 / 120;
 
 export function useStoryProgress(): void {
   const isPlaying = useTimelineStore((s) => s.isPlaying);

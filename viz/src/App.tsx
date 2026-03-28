@@ -19,6 +19,7 @@ import { TimelineSlider } from '@/components/ui/TimelineSlider';
 import { InfoPanel } from '@/components/ui/InfoPanel';
 import { ChapterNav } from '@/components/ui/ChapterNav';
 import { HelpOverlay } from '@/components/ui/HelpOverlay';
+import { StatusPanel } from '@/components/ui/StatusPanel';
 import { useTimelineData } from '@/hooks/useTimelineData';
 import { useStoryProgress } from '@/hooks/useStoryProgress';
 import type { CameraShot } from '@/engine/cameraInterpolation';
@@ -104,6 +105,7 @@ export default function App() {
       {/* HTML UI Overlay */}
       <div className="ui-overlay">
         <ChapterNav />
+        <StatusPanel />
         <TimelineSlider />
         <InfoPanel />
         <HelpOverlay />

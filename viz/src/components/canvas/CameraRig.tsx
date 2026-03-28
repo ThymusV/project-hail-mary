@@ -1,17 +1,19 @@
 /**
- * CameraRig — butter-smooth camera controller.
+ * CameraRig -- butter-smooth camera controller.
  *
  * Reads storyProgress, maps to chronological time, interpolates
- * camera keyframes, and DAMPS toward the target. When paused,
- * enables OrbitControls for free look; on resume, smoothly
- * transitions back to the cinematic track.
+ * camera keyframes, and DAMPS toward the target.
+ *
+ * Uses CameraControls from drei for Apple-quality scroll inertia.
+ * Dual damping: PLAYING_DAMP (fast) when playing, PAUSED_DAMP
+ * (relaxed) when paused.  Recenter via recenterRequestId.
  */
 
 import { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
-import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
+import { CameraControls } from '@react-three/drei';
+import type CameraControlsImpl from 'camera-controls';
 import { useTimelineStore } from '@/stores/useTimelineStore';
 import { interpolateCamera } from '@/engine/cameraInterpolation';
 import { progressToTime } from '@/engine/timeMapping';
@@ -27,12 +29,10 @@ interface CameraRigProps {
 
 // ── Damping helpers ─────────────────────────────────────────────────────
 
-/**
- * THREE.MathUtils.damp is frame-rate independent exponential smoothing.
- * `lambda` = higher is faster. 4-5 feels Apple-quality: responsive
- * without being jittery, with pleasant inertia on fast scrubs.
- */
-const DAMP_LAMBDA = 4.5;
+/** Faster tracking when playing so camera follows the action. */
+const PLAYING_DAMP = 8;
+/** Softer feel when paused for comfortable manual orbit. */
+const PAUSED_DAMP = 4;
 
 function dampVec3(
   current: THREE.Vector3,
@@ -49,7 +49,7 @@ function dampVec3(
 
 export function CameraRig({ cameraShots, progressMapping }: CameraRigProps) {
   const { camera } = useThree();
-  const controlsRef = useRef<OrbitControlsImpl>(null!);
+  const controlsRef = useRef<CameraControlsImpl>(null!);
 
   // Smooth interpolation targets (mutable refs to avoid GC)
   const smoothPos = useRef(new THREE.Vector3(0, 5, 15));
@@ -67,27 +67,65 @@ export function CameraRig({ cameraShots, progressMapping }: CameraRigProps) {
   });
 
   const isPlaying = useTimelineStore((s) => s.isPlaying);
+  const recenterRequestId = useTimelineStore((s) => s.recenterRequestId);
+  const lastRecenterId = useRef(0);
 
-  // When paused, enable orbit controls
+  // When paused, enable orbit controls; on play, snapshot and disable
   useEffect(() => {
     if (!isPlaying) {
-      // Entering orbit mode
       isOrbiting.current = true;
       orbitBlend.current = 0;
       if (controlsRef.current) {
         controlsRef.current.enabled = true;
       }
     } else {
-      // Resuming playback — snapshot the current orbit camera state
       if (isOrbiting.current && controlsRef.current) {
         orbitSnapshot.current.position.copy(camera.position);
-        orbitSnapshot.current.target.copy(controlsRef.current.target);
+        controlsRef.current.getTarget(orbitSnapshot.current.target);
         controlsRef.current.enabled = false;
       }
       isOrbiting.current = false;
       orbitBlend.current = 0;
     }
   }, [isPlaying, camera]);
+
+  // Handle recenter requests -- smoothly animate back to cinematic track
+  useEffect(() => {
+    if (recenterRequestId > lastRecenterId.current) {
+      lastRecenterId.current = recenterRequestId;
+
+      const progress = useTimelineStore.getState().storyProgress;
+      const chronoTime = progressToTime(progress, progressMapping);
+      const camTarget = interpolateCamera(chronoTime, cameraShots);
+      if (!camTarget) return;
+
+      const targetPos = new THREE.Vector3(...camTarget.position);
+      const targetLook = new THREE.Vector3(...camTarget.target);
+
+      // Use CameraControls' built-in smooth transition
+      if (controlsRef.current) {
+        controlsRef.current.setLookAt(
+          targetPos.x, targetPos.y, targetPos.z,
+          targetLook.x, targetLook.y, targetLook.z,
+          true, // enableTransition = smooth
+        );
+      }
+
+      // Snap smooth refs
+      smoothPos.current.copy(targetPos);
+      smoothTarget.current.copy(targetLook);
+      smoothFov.current = camTarget.fov;
+
+      const perspCam = camera as THREE.PerspectiveCamera;
+      if (perspCam.fov !== undefined) {
+        perspCam.fov = camTarget.fov;
+        perspCam.updateProjectionMatrix();
+      }
+
+      isOrbiting.current = !useTimelineStore.getState().isPlaying;
+      orbitBlend.current = 1;
+    }
+  }, [recenterRequestId, camera, cameraShots, progressMapping]);
 
   useFrame((_state, delta) => {
     const dt = Math.min(delta, 0.1);
@@ -96,13 +134,15 @@ export function CameraRig({ cameraShots, progressMapping }: CameraRigProps) {
 
     // Derive chronological time and camera target
     const chronoTime = progressToTime(progress, progressMapping);
-    const target = interpolateCamera(chronoTime, cameraShots);
+    const camTarget = interpolateCamera(chronoTime, cameraShots);
 
-    if (!target) return;
+    if (!camTarget) return;
 
-    const targetPos = new THREE.Vector3(...target.position);
-    const targetLook = new THREE.Vector3(...target.target);
-    const targetFov = target.fov;
+    const targetPos = new THREE.Vector3(...camTarget.position);
+    const targetLook = new THREE.Vector3(...camTarget.target);
+    const targetFov = camTarget.fov;
+
+    const damp = playing ? PLAYING_DAMP : PAUSED_DAMP;
 
     if (playing) {
       // Smooth transition from orbit snapshot back to cinematic
@@ -110,7 +150,6 @@ export function CameraRig({ cameraShots, progressMapping }: CameraRigProps) {
         orbitBlend.current = Math.min(1, orbitBlend.current + dt * 2.0);
         const t = easeOutCubic(orbitBlend.current);
 
-        // Blend from snapshot to cinematic target
         const blendPos = orbitSnapshot.current.position.clone().lerp(targetPos, t);
         const blendTarget = orbitSnapshot.current.target.clone().lerp(targetLook, t);
 
@@ -118,59 +157,47 @@ export function CameraRig({ cameraShots, progressMapping }: CameraRigProps) {
         smoothTarget.current.copy(blendTarget);
         smoothFov.current = THREE.MathUtils.lerp(smoothFov.current, targetFov, t);
       } else {
-        // Normal cinematic damping
-        dampVec3(smoothPos.current, targetPos, DAMP_LAMBDA, dt);
-        dampVec3(smoothTarget.current, targetLook, DAMP_LAMBDA, dt);
+        dampVec3(smoothPos.current, targetPos, damp, dt);
+        dampVec3(smoothTarget.current, targetLook, damp, dt);
         smoothFov.current = THREE.MathUtils.damp(
           smoothFov.current,
           targetFov,
-          DAMP_LAMBDA,
+          damp,
           dt,
         );
       }
 
-      // Apply to camera — direct mutation is the standard R3F pattern
+      // Apply to camera
       camera.position.copy(smoothPos.current);
       camera.lookAt(smoothTarget.current);
       const perspCam = camera as THREE.PerspectiveCamera;
       if (perspCam.fov !== undefined) {
-        // eslint-disable-next-line react-hooks/immutability
         perspCam.fov = smoothFov.current;
         perspCam.updateProjectionMatrix();
       }
     } else {
-      // Paused — orbit controls handle camera. Still damp smooth targets
+      // Paused -- orbit controls handle camera. Still damp smooth targets
       // so resuming playback starts from a known smooth state.
-      dampVec3(smoothPos.current, targetPos, DAMP_LAMBDA * 0.5, dt);
-      dampVec3(smoothTarget.current, targetLook, DAMP_LAMBDA * 0.5, dt);
+      dampVec3(smoothPos.current, targetPos, damp * 0.5, dt);
+      dampVec3(smoothTarget.current, targetLook, damp * 0.5, dt);
       smoothFov.current = THREE.MathUtils.damp(
         smoothFov.current,
         targetFov,
-        DAMP_LAMBDA * 0.5,
+        damp * 0.5,
         dt,
       );
-
-      // Update orbit controls target to follow cinematic loosely
-      // (so when user hasn't touched orbit, it stays roughly right)
-      if (controlsRef.current && !controlsRef.current.enabled) {
-        controlsRef.current.target.copy(smoothTarget.current);
-      }
     }
   });
 
   return (
-    <OrbitControls
+    <CameraControls
       ref={controlsRef}
       makeDefault
       enabled={!isPlaying}
-      enableDamping
-      dampingFactor={0.08}
+      smoothTime={0.35}
+      draggingSmoothTime={0.15}
       minDistance={0.5}
       maxDistance={300}
-      enablePan
-      panSpeed={0.5}
-      rotateSpeed={0.5}
-      zoomSpeed={0.8}
     />
   );
 }

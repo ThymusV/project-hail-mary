@@ -1,14 +1,15 @@
 /**
- * Labels — 3D text labels for key stars.
+ * Labels -- 3D text labels for key stars.
  *
- * Billboard text using Drei <Text> that fades based on distance
- * from camera. Semi-transparent background plane behind each label.
+ * Billboard text using Drei <Billboard> + <Text> that always faces
+ * the camera.  Star spheres remain position-fixed; only the text
+ * group is billboarded.  Distance-based fade for readability.
  */
 
 import { useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
-import { Text } from '@react-three/drei';
+import { Text, Billboard } from '@react-three/drei';
 
 // ── Star label data ─────────────────────────────────────────────────────
 
@@ -83,7 +84,7 @@ function StarLabelItem({ label }: { label: StarLabel }) {
 
   return (
     <group ref={groupRef} position={label.position}>
-      {/* Emissive star sphere */}
+      {/* Emissive star sphere — NOT billboarded, stays in place */}
       <mesh>
         <sphereGeometry args={[label.size, 16, 16]} />
         <meshStandardMaterial
@@ -94,45 +95,48 @@ function StarLabelItem({ label }: { label: StarLabel }) {
         />
       </mesh>
 
-      {/* English name */}
-      <Text
-        position={[0, label.size + 0.6, 0]}
-        fontSize={0.5}
-        color="#ffffff"
-        anchorX="center"
-        anchorY="bottom"
-        outlineWidth={0.02}
-        outlineColor="#000000"
-        fillOpacity={1}
-        font={undefined}
-      >
-        {label.name}
-        <meshBasicMaterial
-          transparent
-          depthWrite={false}
-          side={THREE.DoubleSide}
-        />
-      </Text>
+      {/* Text labels — billboarded so they always face camera */}
+      <Billboard follow lockX={false} lockY={false} lockZ={false}>
+        {/* English name */}
+        <Text
+          position={[0, label.size + 0.6, 0]}
+          fontSize={0.5}
+          color="#ffffff"
+          anchorX="center"
+          anchorY="bottom"
+          outlineWidth={0.02}
+          outlineColor="#000000"
+          fillOpacity={1}
+          font={undefined}
+        >
+          {label.name}
+          <meshBasicMaterial
+            transparent
+            depthWrite={false}
+            side={THREE.DoubleSide}
+          />
+        </Text>
 
-      {/* Chinese name */}
-      <Text
-        position={[0, label.size + 0.15, 0]}
-        fontSize={0.35}
-        color="#c8c8dc"
-        fillOpacity={0.8}
-        anchorX="center"
-        anchorY="bottom"
-        outlineWidth={0.015}
-        outlineColor="#000000"
-        font={undefined}
-      >
-        {label.nameCN}
-        <meshBasicMaterial
-          transparent
-          depthWrite={false}
-          side={THREE.DoubleSide}
-        />
-      </Text>
+        {/* Chinese name */}
+        <Text
+          position={[0, label.size + 0.15, 0]}
+          fontSize={0.35}
+          color="#c8c8dc"
+          fillOpacity={0.8}
+          anchorX="center"
+          anchorY="bottom"
+          outlineWidth={0.015}
+          outlineColor="#000000"
+          font={undefined}
+        >
+          {label.nameCN}
+          <meshBasicMaterial
+            transparent
+            depthWrite={false}
+            side={THREE.DoubleSide}
+          />
+        </Text>
+      </Billboard>
     </group>
   );
 }

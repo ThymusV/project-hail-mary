@@ -23,10 +23,17 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
     title: 'Playback',
     shortcuts: [
       { keys: ['Space'], description: 'Play / Pause' },
-      { keys: ['\u2190'], description: 'Step backward (1%)' },
-      { keys: ['\u2192'], description: 'Step forward (1%)' },
-      { keys: ['Shift', '\u2190'], description: 'Jump backward (5%)' },
-      { keys: ['Shift', '\u2192'], description: 'Jump forward (5%)' },
+      { keys: ['\u2190 / \u2192'], description: 'Fine scrub (\u00b10.5%)' },
+      { keys: ['Shift', '\u2190 / \u2192'], description: 'Jump (\u00b15%)' },
+      { keys: ['J'], description: 'Previous event' },
+      { keys: ['K'], description: 'Next event' },
+      { keys: ['Alt', '\u2190 / \u2192'], description: 'Prev / Next event' },
+    ],
+  },
+  {
+    title: 'Camera',
+    shortcuts: [
+      { keys: ['R'], description: 'Reset camera / \u91CD\u7F6E\u955C\u5934' },
     ],
   },
   {

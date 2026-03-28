@@ -1,46 +1,53 @@
 /**
- * Trajectory — animated flight-path curve through interstellar space.
+ * Trajectory -- animated multi-segment flight-path through interstellar space.
  *
- * CatmullRom spline: Sol [0,0,0] -> Tau Ceti [11.9,0,0] -> 40 Eridani [-8,12,3]
- * The line "draws" as timeline progresses, with a glowing leading edge.
- * Uses custom shader for the animated dash / draw effect.
+ * Four segments, each with its own color and TubeGeometry:
+ *   1. Sol -> Tau Ceti (blue)
+ *   2. Tau Ceti -> partial return (cyan)
+ *   3. Turnaround -> rescue Rocky (red)
+ *   4. Reunion -> 40 Eridani (gold)
+ *
+ * Each segment draws on independently as storyProgress advances.
+ * Glowing spheres mark the separation (~0.65) and reunion (~0.75) points.
  */
 
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useTimelineStore } from '@/stores/useTimelineStore';
+import {
+  getSegmentCurves,
+  getSegmentAtProgress,
+  TRAJECTORY_SEGMENTS,
+} from '@/utils/sharedCurve';
 
 // ── Constants ───────────────────────────────────────────────────────────
 
-/** Key waypoints in interstellar frame (light-years). */
-const WAYPOINTS = [
-  new THREE.Vector3(0, 0, 0),       // Sol
-  new THREE.Vector3(5.0, 0.8, 0.3), // mid-transit control
-  new THREE.Vector3(11.9, 0, 0),    // Tau Ceti
-  new THREE.Vector3(4.0, 8.0, 1.5), // return arc control
-  new THREE.Vector3(-8, 12, 3),     // 40 Eridani
-];
-
-const CURVE_SEGMENTS = 512;
+const CURVE_SEGMENTS = 256;
 const TUBE_RADIUS = 0.04;
 const TUBE_RADIAL_SEGMENTS = 6;
+
+/** Progress ranges where each segment draws (start, end). */
+const SEGMENT_PROGRESS_RANGES: [number, number][] = [
+  [0.0, 0.35],   // Outbound
+  [0.35, 0.65],  // Partial return
+  [0.65, 0.75],  // Rescue turnaround
+  [0.75, 1.0],   // To 40 Eridani
+];
+
+/** Positions for story-point markers. */
+const SEPARATION_POINT = new THREE.Vector3(8.0, 1.5, 0.5);
+const REUNION_POINT = new THREE.Vector3(9.5, 0.8, 0.3);
 
 // ── Shader ──────────────────────────────────────────────────────────────
 
 const vertexShader = /* glsl */ `
   attribute float aCurveT;
-  uniform float uDrawProgress;
 
   varying float vCurveT;
-  varying float vDraw;
 
   void main() {
     vCurveT = aCurveT;
-
-    // How far along the drawn portion this vertex is
-    vDraw = uDrawProgress;
-
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
@@ -49,10 +56,8 @@ const fragmentShader = /* glsl */ `
   uniform float uDrawProgress;
   uniform float uTime;
   uniform vec3 uColor;
-  uniform vec3 uAccentColor;
 
   varying float vCurveT;
-  varying float vDraw;
 
   void main() {
     // Discard un-drawn portion
@@ -65,96 +70,191 @@ const fragmentShader = /* glsl */ `
     // Gentle pulse on the drawn portion
     float pulse = 0.85 + 0.15 * sin(uTime * 2.0 - vCurveT * 20.0);
 
-    // Base color with warm accent blend near leading edge
-    vec3 color = mix(uColor, uAccentColor, edgeGlow * 0.6);
-
     // Brightness: drawn trail is softer, edge is bright
     float brightness = mix(0.4 * pulse, 2.5, edgeGlow);
 
     // Fade in from start
     float fadeIn = smoothstep(0.0, 0.02, vCurveT);
 
-    gl_FragColor = vec4(color * brightness * fadeIn, (0.6 + edgeGlow * 0.4) * fadeIn);
+    gl_FragColor = vec4(uColor * brightness * fadeIn, (0.6 + edgeGlow * 0.4) * fadeIn);
   }
 `;
+
+// ── Per-segment tube ────────────────────────────────────────────────────
+
+interface SegmentTubeData {
+  geometry: THREE.TubeGeometry;
+  material: THREE.ShaderMaterial;
+  color: THREE.Color;
+}
+
+function buildSegmentTube(
+  curve: THREE.CatmullRomCurve3,
+  colorHex: string,
+): SegmentTubeData {
+  const tubeGeo = new THREE.TubeGeometry(
+    curve,
+    CURVE_SEGMENTS,
+    TUBE_RADIUS,
+    TUBE_RADIAL_SEGMENTS,
+    false,
+  );
+
+  // Compute per-vertex curve parameter (0-1) for draw effect
+  const posAttr = tubeGeo.getAttribute('position');
+  const count = posAttr.count;
+  const curveTs = new Float32Array(count);
+  const tempVec = new THREE.Vector3();
+
+  for (let i = 0; i < count; i++) {
+    tempVec.set(posAttr.getX(i), posAttr.getY(i), posAttr.getZ(i));
+    let bestT = 0;
+    let bestDist = Infinity;
+    for (let s = 0; s <= 200; s++) {
+      const t = s / 200;
+      const pt = curve.getPointAt(t);
+      const d = tempVec.distanceToSquared(pt);
+      if (d < bestDist) {
+        bestDist = d;
+        bestT = t;
+      }
+    }
+    curveTs[i] = bestT;
+  }
+
+  tubeGeo.setAttribute('aCurveT', new THREE.BufferAttribute(curveTs, 1));
+
+  const color = new THREE.Color(colorHex);
+  const mat = new THREE.ShaderMaterial({
+    vertexShader,
+    fragmentShader,
+    uniforms: {
+      uDrawProgress: { value: 0 },
+      uTime: { value: 0 },
+      uColor: { value: color },
+    },
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+  });
+
+  return { geometry: tubeGeo, material: mat, color };
+}
 
 // ── Component ───────────────────────────────────────────────────────────
 
 export function Trajectory() {
-  const materialRef = useRef<THREE.ShaderMaterial>(null!);
+  const materialRefs = useRef<THREE.ShaderMaterial[]>([]);
+  const separationRef = useRef<THREE.Mesh>(null!);
+  const reunionRef = useRef<THREE.Mesh>(null!);
 
-  const { geometry, material } = useMemo(() => {
-    // Build spline
-    const spline = new THREE.CatmullRomCurve3(WAYPOINTS, false, 'centripetal', 0.5);
-
-    // Create tube geometry
-    const tubeGeo = new THREE.TubeGeometry(
-      spline,
-      CURVE_SEGMENTS,
-      TUBE_RADIUS,
-      TUBE_RADIAL_SEGMENTS,
-      false,
+  const tubes = useMemo(() => {
+    const curves = getSegmentCurves();
+    return curves.map((curve, i) =>
+      buildSegmentTube(curve, TRAJECTORY_SEGMENTS[i].color),
     );
-
-    // Compute per-vertex curve parameter (0-1) for draw effect
-    const posAttr = tubeGeo.getAttribute('position');
-    const count = posAttr.count;
-    const curveTs = new Float32Array(count);
-
-    // For each vertex, find the nearest point on the curve
-    const tempVec = new THREE.Vector3();
-    for (let i = 0; i < count; i++) {
-      tempVec.set(
-        posAttr.getX(i),
-        posAttr.getY(i),
-        posAttr.getZ(i),
-      );
-      // Sample curve to find closest t
-      let bestT = 0;
-      let bestDist = Infinity;
-      for (let s = 0; s <= 200; s++) {
-        const t = s / 200;
-        const pt = spline.getPointAt(t);
-        const d = tempVec.distanceToSquared(pt);
-        if (d < bestDist) {
-          bestDist = d;
-          bestT = t;
-        }
-      }
-      curveTs[i] = bestT;
-    }
-
-    tubeGeo.setAttribute('aCurveT', new THREE.BufferAttribute(curveTs, 1));
-
-    const mat = new THREE.ShaderMaterial({
-      vertexShader,
-      fragmentShader,
-      uniforms: {
-        uDrawProgress: { value: 0 },
-        uTime: { value: 0 },
-        uColor: { value: new THREE.Color('#4488ff') },
-        uAccentColor: { value: new THREE.Color('#88aaff') },
-      },
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      side: THREE.DoubleSide,
-    });
-
-    return { geometry: tubeGeo, material: mat };
   }, []);
 
-  useFrame(({ clock }) => {
-    if (!materialRef.current) return;
+  // Store material refs for useFrame access
+  const setMaterialRef = (index: number) => (el: THREE.ShaderMaterial | null) => {
+    if (el) materialRefs.current[index] = el;
+  };
 
+  useFrame(({ clock }) => {
     const progress = useTimelineStore.getState().storyProgress;
-    materialRef.current.uniforms.uDrawProgress.value = progress;
-    materialRef.current.uniforms.uTime.value = clock.elapsedTime;
+    const time = clock.elapsedTime;
+
+    // Update each segment's draw progress
+    for (let i = 0; i < tubes.length; i++) {
+      const mat = materialRefs.current[i];
+      if (!mat) continue;
+
+      const [rangeStart, rangeEnd] = SEGMENT_PROGRESS_RANGES[i];
+      const rangeSpan = rangeEnd - rangeStart;
+
+      // Map global progress to this segment's local draw progress (0-1)
+      let localDraw = 0;
+      if (progress >= rangeEnd) {
+        localDraw = 1;
+      } else if (progress > rangeStart) {
+        localDraw = (progress - rangeStart) / rangeSpan;
+      }
+
+      mat.uniforms.uDrawProgress.value = localDraw;
+      mat.uniforms.uTime.value = time;
+    }
+
+    // Separation marker: visible when progress passes ~0.65
+    if (separationRef.current) {
+      const sepAlpha = THREE.MathUtils.smoothstep(progress, 0.62, 0.67);
+      separationRef.current.visible = sepAlpha > 0.01;
+      const sepMat = separationRef.current.material as THREE.MeshStandardMaterial;
+      sepMat.opacity = sepAlpha;
+      // Subtle breathing
+      const sepScale = 0.12 + 0.02 * Math.sin(time * 3);
+      separationRef.current.scale.setScalar(sepScale);
+    }
+
+    // Reunion marker: visible when progress passes ~0.75
+    if (reunionRef.current) {
+      const renAlpha = THREE.MathUtils.smoothstep(progress, 0.72, 0.77);
+      reunionRef.current.visible = renAlpha > 0.01;
+      const renMat = reunionRef.current.material as THREE.MeshStandardMaterial;
+      renMat.opacity = renAlpha;
+      const renScale = 0.14 + 0.02 * Math.sin(time * 3 + 1);
+      reunionRef.current.scale.setScalar(renScale);
+    }
   });
 
   return (
-    <mesh geometry={geometry} frustumCulled={false}>
-      <primitive object={material} ref={materialRef} attach="material" />
-    </mesh>
+    <group>
+      {/* Segment tubes */}
+      {tubes.map((tube, i) => (
+        <mesh key={i} geometry={tube.geometry} frustumCulled={false}>
+          <primitive
+            object={tube.material}
+            ref={setMaterialRef(i)}
+            attach="material"
+          />
+        </mesh>
+      ))}
+
+      {/* Separation point marker (where Grace separates from Rocky) */}
+      <mesh
+        ref={separationRef}
+        position={SEPARATION_POINT}
+        visible={false}
+      >
+        <sphereGeometry args={[1, 16, 16]} />
+        <meshStandardMaterial
+          color="#44ddff"
+          emissive="#44ddff"
+          emissiveIntensity={3}
+          toneMapped={false}
+          transparent
+          opacity={0}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Reunion point marker (where Grace rescues Rocky) */}
+      <mesh
+        ref={reunionRef}
+        position={REUNION_POINT}
+        visible={false}
+      >
+        <sphereGeometry args={[1, 16, 16]} />
+        <meshStandardMaterial
+          color="#ff6644"
+          emissive="#ff6644"
+          emissiveIntensity={3}
+          toneMapped={false}
+          transparent
+          opacity={0}
+          depthWrite={false}
+        />
+      </mesh>
+    </group>
   );
 }
