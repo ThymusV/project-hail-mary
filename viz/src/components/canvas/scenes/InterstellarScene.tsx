@@ -32,21 +32,30 @@ export function InterstellarScene() {
         color="#ffffff"
       />
 
-      {/* Warm point light at Sol */}
+      {/* Sol — G2V, brightest local star, warm white-yellow */}
       <pointLight
         position={[0, 0, 0]}
-        color="#fff4ea"
-        intensity={3}
-        distance={20}
+        color="#ffe0a0"
+        intensity={1.5}
+        distance={8}
         decay={2}
       />
 
-      {/* Slightly cooler warm point light at Tau Ceti */}
+      {/* Tau Ceti — G8.5V, 52% Sol luminosity, slightly warmer */}
       <pointLight
         position={[11.9, 0, 0]}
-        color="#fff8f0"
-        intensity={2.5}
-        distance={20}
+        color="#ffd080"
+        intensity={0.8}
+        distance={6}
+        decay={2}
+      />
+
+      {/* 40 Eridani A — K1V, 46% Sol luminosity, orange */}
+      <pointLight
+        position={[-8, 12, 3]}
+        color="#ffb060"
+        intensity={0.6}
+        distance={5}
         decay={2}
       />
     </group>

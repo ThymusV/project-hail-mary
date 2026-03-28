@@ -17,31 +17,49 @@ interface StarLabel {
   position: [number, number, number];
   name: string;
   nameCN: string;
+  /** Surface color based on spectral type */
   color: string;
+  /** Emissive glow color (usually warmer than surface) */
+  emissive: string;
+  /** Visual radius in scene units (NOT to scale, for visibility) */
   size: number;
+  /** Emissive intensity — proportional to real luminosity ratio */
+  intensity: number;
 }
 
+/**
+ * Astronomical reference:
+ *  Sol (G2V):       Teff ~5778K, Luminosity 1.0 L☉, color index 0.63
+ *  Tau Ceti (G8.5V): Teff ~5344K, Luminosity 0.52 L☉, slightly cooler/dimmer
+ *  40 Eridani A (K1V): Teff ~5072K, Luminosity 0.46 L☉, noticeably orange
+ */
 const STAR_LABELS: StarLabel[] = [
   {
     position: [0, 0, 0],
     name: 'Sol',
     nameCN: '太阳',
-    color: '#fff4ea',
-    size: 0.35,
+    color: '#fff4e8',     // G2V warm white-yellow
+    emissive: '#ffe0a0',  // warm glow
+    size: 0.4,
+    intensity: 3.0,       // brightest — reference star
   },
   {
     position: [11.9, 0, 0],
     name: 'Tau Ceti',
-    nameCN: '鲸鱼座Tau',
-    color: '#fff4ea',
-    size: 0.35,
+    nameCN: '鲸鱼座τ',
+    color: '#ffecd0',     // G8.5V slightly cooler yellow
+    emissive: '#ffd080',  // warmer, less luminous glow
+    size: 0.32,           // ~0.79 R☉ (smaller than Sol)
+    intensity: 1.8,       // ~0.52 L☉
   },
   {
     position: [-8, 12, 3],
-    name: '40 Eridani',
+    name: '40 Eridani A',
     nameCN: '波江座40',
-    color: '#ffd2a1',
-    size: 0.35,
+    color: '#ffd8a8',     // K1V distinct orange-yellow
+    emissive: '#ffb060',  // warm orange glow
+    size: 0.28,           // ~0.81 R☉
+    intensity: 1.5,       // ~0.46 L☉
   },
 ];
 
@@ -84,14 +102,16 @@ function StarLabelItem({ label }: { label: StarLabel }) {
 
   return (
     <group ref={groupRef} position={label.position}>
-      {/* Emissive star sphere — NOT billboarded, stays in place */}
+      {/* Star sphere — physically-inspired rendering */}
       <mesh>
-        <sphereGeometry args={[label.size, 16, 16]} />
+        <sphereGeometry args={[label.size, 32, 32]} />
         <meshStandardMaterial
           color={label.color}
-          emissive={label.color}
-          emissiveIntensity={2}
+          emissive={label.emissive}
+          emissiveIntensity={label.intensity}
           toneMapped={false}
+          roughness={1}
+          metalness={0}
         />
       </mesh>
 
