@@ -16,107 +16,131 @@ Build a browser-based interactive 3D space-time visualization of *Project Hail M
 - [x] Define project architecture and component structure
 - [x] Create project documents (README, ROADMAP, TASK)
 
-### M0.2 - Codex Review & Plan Finalization
-- [ ] Codex review round 1: validate architecture and data model
-- [ ] Codex review round 2: address feedback, refine plan
+### M0.2 - Architecture Review & Finalization
+- [x] Codex review round 1 -- identified 4 critical issues
+- [x] Fix: multi-scale coordinate frames (interstellar/system/encounter/surface)
+- [x] Fix: rich data model (Event + Segment + Scene + CameraShot)
+- [x] Fix: non-linear time mapping with dual timeline projections
+- [x] Fix: camera as pure function of progress, GSAP scoped to smoothing
+- [x] Fix: reorder phases (data → engine → visuals)
+- [ ] Codex review round 2 -- validate fixes
 - [ ] User confirmation of final plan
 
 ---
 
-## Phase 1: Scaffold & Static Scene
-**Goal: A working 3D scene with stars, trajectory line, and basic camera**
+## Phase 1: Data Schema & Engine Core
+**Goal: Solid data foundation and timeline engine before any visuals**
 
 ### M1.1 - Project Bootstrap
 - Vite + React 19 + TypeScript project setup
-- Install all dependencies (R3F, Drei, GSAP, Zustand, postprocessing)
+- Install all dependencies
 - Configure Vite, TypeScript, ESLint
-- Basic `<Canvas>` rendering with black background
+- Minimal App.tsx (just a black Canvas placeholder)
 
-### M1.2 - Star Field
-- 10,000 instanced stars with random positions in a sphere
-- Star color mapped to temperature (blue-white-yellow-orange-red)
-- Size attenuation for depth perception
-- Key stars (Sol, Tau Ceti, 40 Eridani) rendered as larger, labeled objects
+### M1.2 - Data Schema & Validation
+- Define Zod schemas for: Event, Segment, Scene, CameraShot, CoordinateFrame
+- Define TypeScript interfaces derived from Zod schemas
+- Write `timeline.json` with all 85 events + segments + 7 scenes
+- Validation pipeline: load JSON → Zod parse → typed data
+- Unit tests: schema validation, event ordering, scene coverage
 
-### M1.3 - Trajectory Curve
-- CatmullRomCurve3 from Sol → Tau Ceti → 40 Eridani
-- TubeGeometry or Line2 with glow material
-- Spacecraft marker (simple geometry) positioned on curve
+### M1.3 - Coordinate Frame Architecture
+- Define 4 frames: interstellar (1u=1ly), system (1u=0.01AU), encounter (1u=1m), surface (1u=1m)
+- Frame transform utilities (compose, decompose)
+- Per-frame near/far plane configuration
+- Unit tests: coordinate transforms between frames
 
-### M1.4 - Bloom Post-Processing
-- EffectComposer with selective Bloom
-- Stars and trajectory glow, UI elements do not
-- Leva controls for bloom tuning
+### M1.4 - Timeline Engine
+- Non-linear time ↔ story progress mapping (semantic compression for transit phases)
+- Zustand store: storyProgress (0-1), chronologicalTime, isPlaying, playbackSpeed
+- Dual timeline: chronological vs narrative ordering as two projections
+- Progress → active events/segments/scene resolution
+- Unit tests: time mapping, event resolution, ordering
+
+### M1.5 - Camera Interpolation Engine
+- Camera keyframe table (per scene, per event)
+- Pure function: storyProgress → { position, target, fov }
+- CatmullRomCurve3 for position paths, quaternion slerp for rotation
+- GSAP integration for jump smoothing only (not source of truth)
+- CameraControls for free orbit when paused
+- Unit tests: interpolation, edge cases
 
 ---
 
-## Phase 2: Timeline Engine & Camera System
-**Goal: Scrub through time and the camera follows**
+## Phase 2: Minimal Visual Slice
+**Goal: One working scene with scrubber, proving the full vertical stack**
 
-### M2.1 - Timeline Data
-- Convert 85 events to `timeline.json` with normalized time, positions, camera waypoints
-- TypeScript interfaces for TimelineEvent, CameraWaypoint
-- Zustand store: currentTime, isPlaying, playbackSpeed
+### M2.1 - Scene Infrastructure
+- SceneRouter.tsx: renders active scene component based on store
+- Frame-dependent Canvas config (near/far, background)
+- Scene transition animations (fade/cut)
 
-### M2.2 - Timeline UI
-- Horizontal scrub bar at bottom of screen
-- Event markers (clickable dots) on the bar
+### M2.2 - Interstellar Scene (first scene)
+- StarField.tsx: 10K stars, baked InstancedMesh (no per-frame matrix updates), shader-driven twinkle
+- Key stars (Sol, Tau Ceti, 40 Eridani) as labeled larger objects
+- Trajectory curve (CatmullRomCurve3, multi-segment: Sol→TauCeti→40Eridani)
+- Spacecraft marker on curve driven by progress
+
+### M2.3 - Timeline UI
+- TimelineSlider.tsx: non-linear scrub bar at bottom
+- Event marker dots (clickable, priority-filtered)
 - Play/pause, speed controls (1x/10x/100x)
-- Current event label display
-- Keyboard controls: arrows for scrub, spacebar for play/pause
+- Current event label + mission day display
+- Keyboard: arrows for scrub, spacebar for play/pause
 
-### M2.3 - Camera Rig
-- GSAP-driven camera transitions between event waypoints
-- Smooth position interpolation (CatmullRomCurve3)
-- Quaternion slerp for rotation
-- FOV animation for dramatic zoom
-- OrbitControls when timeline is paused
+### M2.4 - Camera Rig
+- CameraRig.tsx: reads progress from store, outputs interpolated camera state
+- GSAP smoothing on jumps (seekToEvent)
+- CameraControls handoff when paused
+- Verify: forward scrub, reverse scrub, rapid seek, timeline toggle all work
 
-### M2.4 - Spacecraft Animation
-- Ship position = f(currentTime) along trajectory curve
-- Engine glow intensity based on acceleration phase
-- Rotation to face direction of travel
+### M2.5 - Bloom Post-Processing
+- EffectComposer with selective Bloom (luminanceThreshold=1, mipmapBlur)
+- Stars glow, UI does not
+- Leva controls for tuning
+
+**Milestone gate: full vertical slice works — scrub, camera, scene, labels, bloom**
 
 ---
 
-## Phase 3: Scene Detail & Events
-**Goal: Rich scenes at each waypoint with event context**
+## Phase 3: Remaining Scenes
+**Goal: All 6 scenes implemented with scene transitions**
 
-### M3.1 - Sol System Scene
-- Earth with basic texture
-- ISS marker at orbit altitude
-- Launch trajectory from Earth surface to orbit
-- Astrophage infection visualization (Petrova line)
+### M3.1 - Sol System Scene (frame: system)
+- Sun + Earth with basic texture
+- ISS marker in orbit
+- Petrova line visualization
+- Launch trajectory animation
 
-### M3.2 - Interstellar Transit Scene
-- Speed-of-light reference grid
-- Distance counter (light-years from Earth)
-- Time dilation indicator (ship time vs Earth time)
-- Star field parallax during transit
+### M3.2 - Tau Ceti Scene (frame: system)
+- Tau Ceti star + planetary orbits
+- Adrian planet with atmosphere rim glow
+- Orbit-level view of events
 
-### M3.3 - Tau Ceti System Scene
-- Tau Ceti star with planetary system
-- Adrian (planet) with atmosphere glow
-- Rocky's ship (Target A) -- 139m triangular vessel
-- Connection tunnel between ships
-- Sampling chain descent to Adrian
+### M3.3 - Encounter Scene (frame: encounter)
+- Rocky's ship (Target A): 139m triangular geometry
+- Hail Mary: 47m cylindrical geometry
+- Connection tunnel between ships (217m distance)
+- Sampling chain descent to Adrian (91km)
 
-### M3.4 - Return & Rescue Scene
-- Beetle probes (John/Paul/George/Ringo) launch trajectories
-- Search radar visualization (55-degree scan)
-- Grace's turnaround trajectory
-- Rescue approach to disabled Target A
+### M3.4 - Rescue Scene (frame: encounter → interstellar)
+- Beetle probe launch trajectories (4 probes)
+- Search radar sweep visualization
+- Grace's turnaround + approach to disabled Target A
+- Scale transition from encounter back to interstellar
 
-### M3.5 - 40 Eridani Scene
+### M3.5 - 40 Eridani Scene (frame: system → surface)
 - Triple star system (40 Eridani A/B/C)
-- Eridian b planet (high gravity, ammonia atmosphere)
-- Grace's habitat dome on surface
+- Eridian b planet
+- Habitat dome on surface (surface frame)
 
-### M3.6 - Info Panel
-- Slide-in panel with event title, date, description
-- Chapter reference and character involvement
-- Semi-transparent dark blur background
-- Auto-hide after interaction
+### M3.6 - Info Panel & Labels
+- InfoPanel.tsx: slide-in with event details, chapter, characters
+- Priority-based label rendering (importance field)
+- Scale-aware visibility: labels fade at inappropriate distances
+- Label collision avoidance (simple offset strategy)
+
+**Milestone gate: all scenes render, transitions work, scrubber navigates full story**
 
 ---
 
@@ -124,41 +148,36 @@ Build a browser-based interactive 3D space-time visualization of *Project Hail M
 **Goal: Cinematic quality and smooth UX**
 
 ### M4.1 - Visual Polish
-- Planet textures (PBR materials)
+- Planet PBR textures
 - Custom star glow shaders
-- Particle effects (engine exhaust, Astrophage swarm)
-- Vignette + film grain post-processing
-- Loading screen with progressive star field
+- Engine exhaust particles
+- Astrophage swarm particles at Petrova line
+- Vignette + subtle film grain
+- Loading screen
 
 ### M4.2 - Navigation
-- Chapter quick-jump bar
-- Mini-map (2D top-down view)
+- ChapterNav.tsx: chapter/scene quick-jump bar
 - Dual timeline toggle (narrative vs chronological)
 - URL hash state for shareability
+- 2D mini-map (optional)
 
 ### M4.3 - Performance
-- Render-on-demand (invalidateFrameloop)
-- LOD for star field
+- Render-on-demand (frameloop="demand" + invalidation)
+- Star field LOD by scene
 - Lazy texture loading
-- Mobile: reduced particles, DPR cap, simplified bloom
-- Target: 60fps on mid-range hardware
-
-### M4.4 - Responsive Design
-- Mobile-friendly touch controls
-- Responsive UI layout
-- Reduced visual complexity on low-end devices
+- Mobile: DPR cap, reduced particles, simplified bloom
+- Performance profiling pass (target: 60fps mid-range hardware)
 
 ---
 
 ## Phase 5: Content & Extras (Stretch)
-**Goal: Deep storytelling integration**
-
-- Astrophage infection chain visualization (star-to-star propagation map)
+- Astrophage infection chain (star-to-star propagation map)
 - Taumoeba evolution timeline (breeding generations)
-- Ship schematic overlay (using book's actual diagrams)
-- Audio narration at key events
-- Eridian language visualization (harmonic waveforms)
-- Real Gaia DR3 star positions for nearby stars
+- Ship schematic overlay (book's actual diagrams)
+- Audio narration triggers at key events
+- Eridian harmonic language visualization
+- Real Gaia DR3 star positions
+- i18n (Chinese + English)
 
 ---
 
@@ -166,18 +185,33 @@ Build a browser-based interactive 3D space-time visualization of *Project Hail M
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Rendering | R3F over raw Three.js | Declarative, agent-friendly, same performance |
-| Animation | GSAP over Theatre.js | Better docs, timeline scrubbing, larger community |
-| State | Zustand over Redux/Context | Minimal, pmndrs ecosystem, selective subscriptions |
-| Language | TypeScript over JS | Types as agent documentation, fewer bugs |
-| Build | Vite over Next.js | No SSR needed, fastest HMR |
-| Stars | InstancedMesh over Points | Better bloom interaction, cleaner at close range |
-| Scale | 1 unit = 0.1 ly | Keeps numbers manageable, 12 ly = 120 units |
+| Rendering | R3F + Drei | Declarative, agent-friendly, same performance as raw Three.js |
+| Animation | GSAP (scoped) | Jump smoothing only; Zustand is source of truth for camera |
+| State | Zustand | Canonical state for timeline, camera, UI; selective subscriptions |
+| Validation | Zod | Schema validation for timeline data; catches agent errors early |
+| Language | TypeScript | Types as agent documentation, fewer bugs |
+| Build | Vite | No SSR needed, fastest HMR |
+| Coordinates | 4 frames | interstellar/system/encounter/surface avoids float precision issues |
+| Time model | Non-linear progress | Semantic compression for transit; chapter-based scrubbing |
+| Camera | Pure function of progress | Scrub, reverse, seek all work without GSAP state conflicts |
+| Stars | Baked InstancedMesh | Set matrices once, animate via shaders; no per-frame JS updates |
 
-## Context for Agents
+## Scene-State Matrix
 
-- **All development by AI agents** -- files stay under 150 lines, clear interfaces, data-driven
-- **timeline.json is the single source of truth** for all story content
-- **Zustand stores bridge Canvas and UI** -- no prop drilling across the boundary
-- **useFrame for per-frame work, React for structure** -- never trigger reconciliation from the render loop
-- **Leva for runtime tuning** -- every visual parameter should have a debug control during development
+| Scene | Frame | Visible Bodies | Camera Mode | Scrub Behavior | Labels |
+|-------|-------|---------------|-------------|----------------|--------|
+| Earth Departure | system | Sun, Earth, ISS, ship | Pull-back orbit | Dense (many events) | Earth, ISS, ship |
+| Interstellar Transit | interstellar | Star field, trajectory, ship | Follow ship along curve | Compressed (years pass) | Key stars, distance |
+| Tau Ceti Approach | system | Tau Ceti, planets, Adrian | Fly-in to orbit | Medium density | Star, planets |
+| Encounter with Rocky | encounter | Hail Mary, Target A, tunnel | Orbit around ships | Dense (daily events) | Ship names, tunnel |
+| Rescue Search | interstellar→encounter | Star field → Target A | Wide search → approach | Medium | Radar, distance |
+| 40 Eridani Settlement | system→surface | Triple star, Eridian b, dome | Orbit → surface landing | Sparse (16 years summary) | Star, planet, dome |
+
+## Agent Development Guidelines
+
+- **Schema first**: always validate timeline.json changes against Zod schema
+- **Pure functions**: timeline engine and camera interpolation are pure; test with unit tests
+- **One responsibility per module**: clear interfaces; no line limit dogma
+- **Data vs code**: scene content goes in JSON, rendering logic in components
+- **Leva for tuning**: every visual parameter gets a debug control during development
+- **No per-frame JS matrix updates for static geometry**: bake once, animate in shaders
