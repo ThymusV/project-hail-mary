@@ -1,12 +1,13 @@
 /**
  * Effects — post-processing pipeline using native Three.js passes.
  *
- * Uses Three.js EffectComposer + UnrealBloomPass directly
- * (NOT @react-three/postprocessing which has compatibility issues
- * with Three.js r183+).
+ * CRITICAL: This component takes over the R3F render loop.
+ * - Uses useLayoutEffect so the composer exists BEFORE the first frame.
+ * - Falls back to normal gl.render() if composer isn't ready.
+ * - Properly restores gl.autoClear on unmount (StrictMode safe).
  */
 
-import { useRef, useEffect } from 'react';
+import { useRef, useLayoutEffect, useEffect } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import { useControls } from 'leva';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
@@ -16,14 +17,10 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import * as THREE from 'three';
 
 export function Effects() {
-  const { gl, scene, camera, size, invalidate } = useThree();
-
-  // Disable R3F's default rendering — we render via EffectComposer
-  useEffect(() => {
-    gl.autoClear = false;
-  }, [gl]);
+  const { gl, scene, camera, size } = useThree();
   const composerRef = useRef<EffectComposer | null>(null);
   const bloomRef = useRef<UnrealBloomPass | null>(null);
+  const prevAutoClear = useRef(true);
 
   const bloom = useControls(
     'Bloom',
@@ -35,12 +32,14 @@ export function Effects() {
     { collapsed: true },
   );
 
-  // Initialize composer
-  useEffect(() => {
-    const composer = new EffectComposer(gl);
+  // Initialize composer synchronously before first paint (useLayoutEffect)
+  useLayoutEffect(() => {
+    // Save and override autoClear
+    prevAutoClear.current = gl.autoClear;
+    gl.autoClear = false;
 
-    const renderPass = new RenderPass(scene, camera);
-    composer.addPass(renderPass);
+    const composer = new EffectComposer(gl);
+    composer.addPass(new RenderPass(scene, camera));
 
     const bloomPass = new UnrealBloomPass(
       new THREE.Vector2(size.width, size.height),
@@ -51,19 +50,20 @@ export function Effects() {
     composer.addPass(bloomPass);
     bloomRef.current = bloomPass;
 
-    const outputPass = new OutputPass();
-    composer.addPass(outputPass);
-
+    composer.addPass(new OutputPass());
     composerRef.current = composer;
 
     return () => {
+      // Restore renderer state (StrictMode safe)
+      gl.autoClear = prevAutoClear.current;
+      composerRef.current = null;
+      bloomRef.current = null;
       composer.dispose();
     };
-    // Only re-create on gl/scene change, not on every bloom param change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gl, scene]);
 
-  // Update bloom params without recreating composer
+  // Update bloom params live
   useEffect(() => {
     if (bloomRef.current) {
       bloomRef.current.strength = bloom.intensity;
@@ -72,28 +72,30 @@ export function Effects() {
     }
   }, [bloom.intensity, bloom.threshold, bloom.radius]);
 
-  // Update camera reference
+  // Keep camera reference in sync
   useEffect(() => {
-    if (composerRef.current) {
-      const renderPass = composerRef.current.passes[0] as RenderPass;
-      if (renderPass) renderPass.camera = camera;
+    const composer = composerRef.current;
+    if (composer && composer.passes[0]) {
+      (composer.passes[0] as RenderPass).camera = camera;
     }
   }, [camera]);
 
-  // Resize
+  // Handle resize
   useEffect(() => {
-    if (composerRef.current) {
-      composerRef.current.setSize(size.width, size.height);
-    }
+    composerRef.current?.setSize(size.width, size.height);
   }, [size]);
 
-  // Take over rendering from R3F
-  useFrame(({ gl: renderer }) => {
+  // Render: composer if ready, fallback to normal render if not
+  useFrame(() => {
     if (composerRef.current) {
-      renderer.clear();
+      gl.clear();
       composerRef.current.render();
+    } else {
+      // Fallback: normal render (should only happen on first frame if ever)
+      gl.clear();
+      gl.render(scene, camera);
     }
-  }, 1); // priority 1 = runs after scene updates
+  }, 1);
 
-  return null; // Pure logic component
+  return null;
 }

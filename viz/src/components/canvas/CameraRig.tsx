@@ -1,12 +1,14 @@
 /**
- * CameraRig -- butter-smooth camera controller.
+ * CameraRig — butter-smooth camera controller.
  *
- * Reads storyProgress, maps to chronological time, interpolates
- * camera keyframes, and DAMPS toward the target.
+ * SINGLE CAMERA OWNER: CameraControls is the sole writer.
+ * - Playing: we compute the target from timeline interpolation,
+ *   then call controlsRef.setLookAt() with smooth=false each frame.
+ * - Paused: CameraControls handles user orbit/zoom with smoothTime.
+ * - Recenter: smooth setLookAt back to the cinematic track.
  *
- * Uses CameraControls from drei for Apple-quality scroll inertia.
- * Dual damping: PLAYING_DAMP (fast) when playing, PAUSED_DAMP
- * (relaxed) when paused.  Recenter via recenterRequestId.
+ * This eliminates the dual-ownership bug where direct camera.position
+ * writes fought with CameraControls.
  */
 
 import { useRef, useEffect } from 'react';
@@ -20,19 +22,12 @@ import { progressToTime } from '@/engine/timeMapping';
 import type { CameraShot } from '@/engine/cameraInterpolation';
 import type { ProgressMapping } from '@/engine/timeMapping';
 
-// ── Types ───────────────────────────────────────────────────────────────
-
 interface CameraRigProps {
   cameraShots: CameraShot[];
   progressMapping: ProgressMapping;
 }
 
-// ── Damping helpers ─────────────────────────────────────────────────────
-
-/** Faster tracking when playing so camera follows the action. */
-const PLAYING_DAMP = 8;
-/** Softer feel when paused for comfortable manual orbit. */
-const PAUSED_DAMP = 4;
+const DAMP_LAMBDA = 6;
 
 function dampVec3(
   current: THREE.Vector3,
@@ -45,85 +40,70 @@ function dampVec3(
   current.z = THREE.MathUtils.damp(current.z, target.z, lambda, dt);
 }
 
-// ── Component ───────────────────────────────────────────────────────────
-
 export function CameraRig({ cameraShots, progressMapping }: CameraRigProps) {
   const { camera } = useThree();
   const controlsRef = useRef<CameraControlsImpl>(null!);
 
-  // Smooth interpolation targets (mutable refs to avoid GC)
+  // Smooth interpolation targets
   const smoothPos = useRef(new THREE.Vector3(0, 5, 15));
   const smoothTarget = useRef(new THREE.Vector3(0, 0, 0));
   const smoothFov = useRef(60);
-
-  // Track whether we're in orbit mode (paused free-look)
-  const isOrbiting = useRef(false);
-  // Blend factor for transitioning from orbit back to cinematic
-  const orbitBlend = useRef(0);
-  // Snapshot of orbit camera state when playback resumes
-  const orbitSnapshot = useRef({
-    position: new THREE.Vector3(),
-    target: new THREE.Vector3(),
-  });
+  const initialized = useRef(false);
 
   const isPlaying = useTimelineStore((s) => s.isPlaying);
   const recenterRequestId = useTimelineStore((s) => s.recenterRequestId);
   const lastRecenterId = useRef(0);
 
-  // When paused, enable orbit controls; on play, snapshot and disable
+  // Initialize smooth refs from first camera shot
   useEffect(() => {
-    if (!isPlaying) {
-      isOrbiting.current = true;
-      orbitBlend.current = 0;
-      if (controlsRef.current) {
-        controlsRef.current.enabled = true;
-      }
-    } else {
-      if (isOrbiting.current && controlsRef.current) {
-        orbitSnapshot.current.position.copy(camera.position);
-        controlsRef.current.getTarget(orbitSnapshot.current.target);
-        controlsRef.current.enabled = false;
-      }
-      isOrbiting.current = false;
-      orbitBlend.current = 0;
-    }
-  }, [isPlaying, camera]);
+    if (initialized.current) return;
+    const progress = useTimelineStore.getState().storyProgress;
+    const chronoTime = progressToTime(progress, progressMapping);
+    const target = interpolateCamera(chronoTime, cameraShots);
+    if (target) {
+      smoothPos.current.set(...target.position);
+      smoothTarget.current.set(...target.target);
+      smoothFov.current = target.fov;
 
-  // Handle recenter requests -- smoothly animate back to cinematic track
+      // Set camera immediately on first mount
+      camera.position.copy(smoothPos.current);
+      camera.lookAt(smoothTarget.current);
+      if ((camera as THREE.PerspectiveCamera).fov !== undefined) {
+        (camera as THREE.PerspectiveCamera).fov = target.fov;
+        (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
+      }
+
+      // Also set CameraControls initial state
+      if (controlsRef.current) {
+        controlsRef.current.setLookAt(
+          ...target.position,
+          ...target.target,
+          false,
+        );
+      }
+      initialized.current = true;
+    }
+  }, [camera, cameraShots, progressMapping]);
+
+  // Handle recenter requests
   useEffect(() => {
     if (recenterRequestId > lastRecenterId.current) {
       lastRecenterId.current = recenterRequestId;
 
       const progress = useTimelineStore.getState().storyProgress;
       const chronoTime = progressToTime(progress, progressMapping);
-      const camTarget = interpolateCamera(chronoTime, cameraShots);
-      if (!camTarget) return;
+      const target = interpolateCamera(chronoTime, cameraShots);
+      if (!target || !controlsRef.current) return;
 
-      const targetPos = new THREE.Vector3(...camTarget.position);
-      const targetLook = new THREE.Vector3(...camTarget.target);
+      controlsRef.current.setLookAt(
+        ...target.position,
+        ...target.target,
+        true, // smooth transition
+      );
 
-      // Use CameraControls' built-in smooth transition
-      if (controlsRef.current) {
-        controlsRef.current.setLookAt(
-          targetPos.x, targetPos.y, targetPos.z,
-          targetLook.x, targetLook.y, targetLook.z,
-          true, // enableTransition = smooth
-        );
-      }
-
-      // Snap smooth refs
-      smoothPos.current.copy(targetPos);
-      smoothTarget.current.copy(targetLook);
-      smoothFov.current = camTarget.fov;
-
-      const perspCam = camera as THREE.PerspectiveCamera;
-      if (perspCam.fov !== undefined) {
-        perspCam.fov = camTarget.fov;
-        perspCam.updateProjectionMatrix();
-      }
-
-      isOrbiting.current = !useTimelineStore.getState().isPlaying;
-      orbitBlend.current = 1;
+      smoothPos.current.set(...target.position);
+      smoothTarget.current.set(...target.target);
+      smoothFov.current = target.fov;
     }
   }, [recenterRequestId, camera, cameraShots, progressMapping]);
 
@@ -132,60 +112,38 @@ export function CameraRig({ cameraShots, progressMapping }: CameraRigProps) {
     const progress = useTimelineStore.getState().storyProgress;
     const playing = useTimelineStore.getState().isPlaying;
 
-    // Derive chronological time and camera target
     const chronoTime = progressToTime(progress, progressMapping);
-    const camTarget = interpolateCamera(chronoTime, cameraShots);
+    const target = interpolateCamera(chronoTime, cameraShots);
+    if (!target) return;
 
-    if (!camTarget) return;
+    const targetPos = new THREE.Vector3(...target.position);
+    const targetLook = new THREE.Vector3(...target.target);
+    const targetFov = target.fov;
 
-    const targetPos = new THREE.Vector3(...camTarget.position);
-    const targetLook = new THREE.Vector3(...camTarget.target);
-    const targetFov = camTarget.fov;
+    if (playing && controlsRef.current) {
+      // Smooth damp toward cinematic target
+      dampVec3(smoothPos.current, targetPos, DAMP_LAMBDA, dt);
+      dampVec3(smoothTarget.current, targetLook, DAMP_LAMBDA, dt);
+      smoothFov.current = THREE.MathUtils.damp(smoothFov.current, targetFov, DAMP_LAMBDA, dt);
 
-    const damp = playing ? PLAYING_DAMP : PAUSED_DAMP;
+      // Drive camera through CameraControls (single owner)
+      controlsRef.current.setLookAt(
+        smoothPos.current.x, smoothPos.current.y, smoothPos.current.z,
+        smoothTarget.current.x, smoothTarget.current.y, smoothTarget.current.z,
+        false, // no transition, we're damping ourselves
+      );
 
-    if (playing) {
-      // Smooth transition from orbit snapshot back to cinematic
-      if (orbitBlend.current < 1) {
-        orbitBlend.current = Math.min(1, orbitBlend.current + dt * 2.0);
-        const t = easeOutCubic(orbitBlend.current);
-
-        const blendPos = orbitSnapshot.current.position.clone().lerp(targetPos, t);
-        const blendTarget = orbitSnapshot.current.target.clone().lerp(targetLook, t);
-
-        smoothPos.current.copy(blendPos);
-        smoothTarget.current.copy(blendTarget);
-        smoothFov.current = THREE.MathUtils.lerp(smoothFov.current, targetFov, t);
-      } else {
-        dampVec3(smoothPos.current, targetPos, damp, dt);
-        dampVec3(smoothTarget.current, targetLook, damp, dt);
-        smoothFov.current = THREE.MathUtils.damp(
-          smoothFov.current,
-          targetFov,
-          damp,
-          dt,
-        );
-      }
-
-      // Apply to camera
-      camera.position.copy(smoothPos.current);
-      camera.lookAt(smoothTarget.current);
+      // Update FOV
       const perspCam = camera as THREE.PerspectiveCamera;
       if (perspCam.fov !== undefined) {
         perspCam.fov = smoothFov.current;
         perspCam.updateProjectionMatrix();
       }
     } else {
-      // Paused -- orbit controls handle camera. Still damp smooth targets
-      // so resuming playback starts from a known smooth state.
-      dampVec3(smoothPos.current, targetPos, damp * 0.5, dt);
-      dampVec3(smoothTarget.current, targetLook, damp * 0.5, dt);
-      smoothFov.current = THREE.MathUtils.damp(
-        smoothFov.current,
-        targetFov,
-        damp * 0.5,
-        dt,
-      );
+      // Paused: CameraControls handles orbit. Track smooth targets loosely.
+      dampVec3(smoothPos.current, targetPos, DAMP_LAMBDA * 0.3, dt);
+      dampVec3(smoothTarget.current, targetLook, DAMP_LAMBDA * 0.3, dt);
+      smoothFov.current = THREE.MathUtils.damp(smoothFov.current, targetFov, DAMP_LAMBDA * 0.3, dt);
     }
   });
 
@@ -200,10 +158,4 @@ export function CameraRig({ cameraShots, progressMapping }: CameraRigProps) {
       maxDistance={300}
     />
   );
-}
-
-// ── Easing ──────────────────────────────────────────────────────────────
-
-function easeOutCubic(t: number): number {
-  return 1 - Math.pow(1 - t, 3);
 }
