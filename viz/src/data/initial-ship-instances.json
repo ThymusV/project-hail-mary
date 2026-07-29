@@ -1,0 +1,12 @@
+[
+  {
+    "id": "player-ship-01",
+    "name": "Anne Bonny",
+    "classId": "anne-bonny",
+    "factionId": null,
+    "isPlayerControlled": true,
+    "status": "docked",
+    "currentLocationId": "ceres",
+    "transit": null
+  }
+]
