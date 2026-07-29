@@ -279,6 +279,12 @@ export default function App() {
                 locations={gameData.locations}
                 shipClasses={shipClasses}
                 onSelectLocation={setSelected}
+                onSelectShip={(shipInstanceId) => {
+                  const clicked = ships.find((s) => s.id === shipInstanceId);
+                  if (clicked?.isPlayerControlled && clicked.status === 'docked') {
+                    setViewMode('local');
+                  }
+                }}
               />
             ) : (
               <LocalSpaceScene
