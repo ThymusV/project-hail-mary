@@ -76,9 +76,15 @@ interface SolarSystemSceneProps {
   locations: Location[];
   shipClasses: Ship[];
   onSelectLocation?: (location: Location) => void;
+  onSelectShip?: (shipInstanceId: string) => void;
 }
 
-export function SolarSystemScene({ locations, shipClasses, onSelectLocation }: SolarSystemSceneProps) {
+export function SolarSystemScene({
+  locations,
+  shipClasses,
+  onSelectLocation,
+  onSelectShip,
+}: SolarSystemSceneProps) {
   const positions = useMemo(() => resolveLocationPositions(locations), [locations]);
   const locationsById = useMemo(() => new Map(locations.map((l) => [l.id, l])), [locations]);
   const shipClassesById = useMemo(() => new Map(shipClasses.map((c) => [c.id, c])), [shipClasses]);
@@ -124,7 +130,14 @@ export function SolarSystemScene({ locations, shipClasses, onSelectLocation }: S
         const shipClass = shipClassesById.get(ship.classId);
         if (!shipClass) return null;
         const position = resolveShipInstancePosition(ship, positions, elapsedHours);
-        return <ShipMarker key={ship.id} ship={shipClass} position={position} />;
+        return (
+          <ShipMarker
+            key={ship.id}
+            ship={shipClass}
+            position={position}
+            onSelect={() => onSelectShip?.(ship.id)}
+          />
+        );
       })}
 
       <ambientLight intensity={0.12} />
