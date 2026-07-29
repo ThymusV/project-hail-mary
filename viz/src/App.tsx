@@ -1,36 +1,56 @@
 /**
- * App — root layout for the 3D space-time visualization.
+ * App — root layout for the Pre-Protomolécula solar system simulator.
  *
- * INIT FLOW:
+ * Fase 1 milestone: "el jugador puede viajar entre nodos y maniobrar
+ * localmente" (movimiento dual, sección 2.1 del documento de arquitectura).
+ * This first pass covers the transit half — the player's ship (a
+ * ShipInstance, see schema/ship-instance.schema.ts) can be sent to any
+ * location, travel time computed by the brachistochrone model in
+ * engine/orbitalMechanics.ts (validated against canon travel-time tables),
+ * and the world clock (useWorldClockStore) drives its progress in-scene.
+ *
+ * INIT FLOW (unchanged from the base repo):
  * 1. index.html inline style → black background immediately
  * 2. React mounts → dark root div
  * 3. Canvas mounts → gl.setClearColor('#030308') in onCreated
  * 4. Suspense INSIDE Canvas wraps scene children (not the Canvas itself)
- * 5. Effects useLayoutEffect creates EffectComposer before first frame
- * 6. useFrame renders scene (with fallback if composer not ready)
- *
- * IMPORTANT: Suspense is inside Canvas, not around it. This prevents
- * full WebGL tree remounts when Labels/Text suspend during font loading.
  */
 
-import { Suspense, Component, type ReactNode } from 'react';
+import { Suspense, Component, useMemo, useState, type ReactNode } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Leva } from 'leva';
 
-import { InterstellarScene } from '@/components/canvas/scenes/InterstellarScene';
-import { CameraRig } from '@/components/canvas/CameraRig';
+import { SolarSystemScene } from '@/components/canvas/SolarSystemScene';
 import { Effects } from '@/components/canvas/Effects';
-import { TimelineSlider } from '@/components/ui/TimelineSlider';
-import { InfoPanel } from '@/components/ui/InfoPanel';
-import { ChapterNav } from '@/components/ui/ChapterNav';
-import { HelpOverlay } from '@/components/ui/HelpOverlay';
-import { StatusPanel } from '@/components/ui/StatusPanel';
-import { Legend } from '@/components/ui/Legend';
-import { useTimelineData } from '@/hooks/useTimelineData';
-import { useStoryProgress } from '@/hooks/useStoryProgress';
-import type { CameraShot } from '@/engine/cameraInterpolation';
-import type { ProgressMapping } from '@/engine/timeMapping';
-import timelineRaw from '@/data/timeline.json';
+import { validateGameData } from '@/schema/game-data.schema';
+import type { Location } from '@/schema/location.schema';
+import { useWorldClockStore, DEFAULT_TIME_SCALE } from '@/stores/useWorldClockStore';
+import { useShipInstancesStore } from '@/stores/useShipInstancesStore';
+import { travelTimeHoursBetween } from '@/engine/orbitalMechanics';
+
+import shipsRaw from '@/data/ships.json';
+import weaponsRaw from '@/data/weapons.json';
+import factionsRaw from '@/data/factions.json';
+import locationsRaw from '@/data/locations.json';
+
+// ── Validate game data once at startup ─────────────────────────────────
+// Cheap runtime safety net on top of the vitest suite: if a future manual
+// edit to the JSON breaks a cross-reference (bad weaponId/factionId), we
+// fail loudly here instead of silently rendering broken/missing markers.
+const gameData = validateGameData({
+  ships: shipsRaw,
+  weapons: weaponsRaw,
+  factions: factionsRaw,
+  locations: locationsRaw,
+});
+
+const LOCATIONS_BY_ID = new Map(gameData.locations.map((l) => [l.id, l]));
+
+// Burn options offered to the player — matches the G levels documented
+// across every canon travel-time table (0.3g crucero / 1.0g estándar).
+const BURN_OPTIONS = [
+  { label: '0.3g (crucero, ahorra combustible)', g: 0.3 },
+  { label: '1.0g (estándar, más rápido)', g: 1.0 },
+] as const;
 
 // ── Error Boundary ──────────────────────────────────────────────────
 
@@ -62,52 +82,154 @@ class CanvasErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 }
 
-// ── Canvas inner content ──────────────────────────────────────────────
+// ── Location info + travel panel ────────────────────────────────────────
 
-function SceneContent({
-  cameraShots,
-  mapping,
-}: {
-  cameraShots: CameraShot[];
-  mapping: ProgressMapping;
-}) {
-  useStoryProgress();
+function LocationInfoPanel({ location }: { location: Location | null }) {
+  const ships = useShipInstancesStore((s) => s.ships);
+  const startTransit = useShipInstancesStore((s) => s.startTransit);
+  const elapsedHours = useWorldClockStore((s) => s.elapsedHours);
+
+  const playerShip = ships.find((s) => s.isPlayerControlled);
+
+  if (!location) {
+    return (
+      <div style={panelStyle}>
+        <strong>Sistema Sol — Pre-Protomolécula</strong>
+        <p style={{ opacity: 0.7, margin: '6px 0 0' }}>
+          Clic en una localización para ver sus detalles. Arrastra para orbitar, rueda para zoom.
+        </p>
+      </div>
+    );
+  }
+
+  const canTravelHere =
+    playerShip && playerShip.status === 'docked' && playerShip.currentLocationId !== location.id;
 
   return (
-    <>
-      <color attach="background" args={['#030308']} />
+    <div style={{ ...panelStyle, pointerEvents: 'auto' }}>
+      <strong>{location.name}</strong>
+      <p style={{ margin: '4px 0 0', opacity: 0.85 }}>{location.economicStrategicRole}</p>
+      <p style={{ margin: '6px 0 0', fontSize: 11, opacity: 0.55 }}>
+        {location.type} · {location.region} · {location.isCanon ? 'canon' : 'diseño propio'}
+      </p>
 
-      {/* CameraRig and Effects mount unconditionally — no Suspense */}
-      <CameraRig cameraShots={cameraShots} progressMapping={mapping} />
-      <Effects />
+      {canTravelHere && (
+        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {BURN_OPTIONS.map((opt) => {
+            const hours = travelTimeHoursBetween(
+              playerShip.currentLocationId!,
+              location.id,
+              opt.g,
+              LOCATIONS_BY_ID,
+            );
+            return (
+              <button
+                key={opt.g}
+                onClick={() =>
+                  startTransit(playerShip.id, location.id, opt.g, elapsedHours, LOCATIONS_BY_ID)
+                }
+                style={travelButtonStyle}
+              >
+                Viajar a {opt.g}g — {Math.round(hours)}h ({opt.label})
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-      {/* Scene content wrapped in Suspense — Labels/Text may suspend for font loading */}
-      <Suspense fallback={null}>
-        <InterstellarScene />
-      </Suspense>
-    </>
+      {playerShip?.status === 'in-transit' && playerShip.transit && (
+        <p style={{ marginTop: 8, fontSize: 11, opacity: 0.7 }}>
+          En tránsito hacia {LOCATIONS_BY_ID.get(playerShip.transit.toLocationId)?.name} — llegada en{' '}
+          {Math.max(0, Math.round(playerShip.transit.arrivalHours - elapsedHours))}h de juego.
+        </p>
+      )}
+    </div>
   );
+}
+
+// ── Time controls ────────────────────────────────────────────────────────
+
+function TimeControls() {
+  const timeScale = useWorldClockStore((s) => s.timeScale);
+  const setTimeScale = useWorldClockStore((s) => s.setTimeScale);
+  const elapsedHours = useWorldClockStore((s) => s.elapsedHours);
+
+  const days = Math.floor(elapsedHours / 24);
+  const hours = Math.floor(elapsedHours % 24);
+
+  return (
+    <div style={{ ...panelStyle, bottom: 'auto', top: 16, left: 16, pointerEvents: 'auto' }}>
+      <strong>Día {days}, {hours}h</strong>
+      <div style={{ marginTop: 6, display: 'flex', gap: 4 }}>
+        <button style={timeButtonStyle(timeScale === 0)} onClick={() => setTimeScale(0)}>
+          Pausa
+        </button>
+        <button style={timeButtonStyle(timeScale === DEFAULT_TIME_SCALE)} onClick={() => setTimeScale(DEFAULT_TIME_SCALE)}>
+          1×
+        </button>
+        <button style={timeButtonStyle(timeScale === DEFAULT_TIME_SCALE * 10)} onClick={() => setTimeScale(DEFAULT_TIME_SCALE * 10)}>
+          10×
+        </button>
+        <button style={timeButtonStyle(timeScale === DEFAULT_TIME_SCALE * 50)} onClick={() => setTimeScale(DEFAULT_TIME_SCALE * 50)}>
+          50×
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Styles ────────────────────────────────────────────────────────────────
+
+const panelStyle: React.CSSProperties = {
+  position: 'absolute',
+  bottom: 16,
+  left: 16,
+  maxWidth: 340,
+  padding: '10px 14px',
+  background: 'rgba(8, 10, 16, 0.72)',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: 8,
+  color: '#e6ecf5',
+  fontFamily: 'system-ui, sans-serif',
+  fontSize: 13,
+  pointerEvents: 'none',
+  backdropFilter: 'blur(4px)',
+};
+
+const travelButtonStyle: React.CSSProperties = {
+  background: 'rgba(80, 140, 255, 0.18)',
+  border: '1px solid rgba(120, 170, 255, 0.4)',
+  borderRadius: 6,
+  color: '#cfe0ff',
+  fontSize: 12,
+  padding: '6px 8px',
+  cursor: 'pointer',
+  textAlign: 'left',
+};
+
+function timeButtonStyle(active: boolean): React.CSSProperties {
+  return {
+    background: active ? 'rgba(120, 170, 255, 0.35)' : 'rgba(255,255,255,0.06)',
+    border: '1px solid rgba(255,255,255,0.15)',
+    borderRadius: 5,
+    color: '#e6ecf5',
+    fontSize: 12,
+    padding: '4px 8px',
+    cursor: 'pointer',
+  };
 }
 
 // ── Root App ──────────────────────────────────────────────────────────
 
 export default function App() {
-  const data = useTimelineData();
-  // JSON arrays are number[], cast to the tuple types CameraShot expects
-  const cameraShots = (timelineRaw.cameraShots as unknown as CameraShot[]);
+  const [selected, setSelected] = useState<Location | null>(null);
+  const shipClasses = useMemo(() => gameData.ships, []);
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#030308' }}>
-      <Leva
-        collapsed
-        hidden={import.meta.env.PROD}
-        titleBar={{ title: 'Debug Controls' }}
-      />
-
-      {/* Canvas mounts immediately — no Suspense around it */}
       <CanvasErrorBoundary>
         <Canvas
-          camera={{ position: [0, 5, 15], fov: 60, near: 0.01, far: 500 }}
+          camera={{ position: [0, 14, 26], fov: 55, near: 0.01, far: 500 }}
           gl={{ antialias: false, powerPreference: 'high-performance', alpha: false }}
           dpr={[1, 1.5]}
           style={{ background: '#030308' }}
@@ -116,21 +238,23 @@ export default function App() {
             gl.setClearColor('#030308', 1);
           }}
         >
-          <SceneContent cameraShots={cameraShots} mapping={data.mapping} />
+          <color attach="background" args={['#030308']} />
+          <Effects />
+          <Suspense fallback={null}>
+            <SolarSystemScene
+              locations={gameData.locations}
+              shipClasses={shipClasses}
+              onSelectLocation={setSelected}
+            />
+          </Suspense>
         </Canvas>
       </CanvasErrorBoundary>
 
-      {/* CSS Vignette */}
       <div className="vignette-overlay" />
 
-      {/* HTML UI Overlay */}
-      <div className="ui-overlay">
-        <ChapterNav />
-        <StatusPanel />
-        <TimelineSlider />
-        <InfoPanel />
-        <Legend />
-        <HelpOverlay />
+      <div className="ui-overlay" style={{ pointerEvents: 'none' }}>
+        <TimeControls />
+        <LocationInfoPanel location={selected} />
       </div>
     </div>
   );
