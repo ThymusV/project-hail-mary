@@ -1,0 +1,56 @@
+[
+  {
+    "id": "pdc-network",
+    "name": "Red de Defensa de Punto (PDC)",
+    "originalName": "Réseau de défense rapprochée",
+    "category": "pdc",
+    "range": "close",
+    "damage": "2d6",
+    "tacticalNotes": "Sistema dual: interdicción cinética de torpedos entrantes y, en rol ofensivo, perforación de cascos ligeros o eliminación de personal en EVA. Configuración estándar en naves de combate: red de 6 cañones con cobertura total.",
+    "source": "Catálogo Técnico de Armamento Naval y Sistemas de Combate (Pre-Protomolécula)",
+    "isCanon": true
+  },
+  {
+    "id": "electric-cannon",
+    "name": "Cañón Eléctrico",
+    "originalName": "Canon électrique",
+    "category": "railgun",
+    "range": "medium",
+    "damage": "3d6",
+    "tacticalNotes": "Acelerador de masa por rieles electromagnéticos; proyectiles de masa sólida a velocidad hipersónica. Altamente destructivo contra integridad estructural. Poco común fuera de naves de interdicción de élite.",
+    "source": "Catálogo Técnico de Armamento Naval y Sistemas de Combate (Pre-Protomolécula)",
+    "isCanon": true
+  },
+  {
+    "id": "torpedo-tube",
+    "name": "Tubo Lanza-Torpedos",
+    "category": "torpedo",
+    "range": "long",
+    "damage": "4d6",
+    "tacticalNotes": "Vector de amenaza principal a larga distancia. Empleado para saturar los nodos de defensa del objetivo; un impacto fuera de cobertura PDC suele causar brecha catastrófica de casco.",
+    "counterMeasures": "Redes de Defensa de Punto (PDC). Efectividad de interceptación decrece con el número de torpedos en salva (saturación).",
+    "source": "Catálogo Técnico de Armamento Naval y Sistemas de Combate (Pre-Protomolécula)",
+    "isCanon": true
+  },
+  {
+    "id": "grappler",
+    "name": "Gancho de Abordaje",
+    "originalName": "Grappler",
+    "category": "grappler",
+    "range": "close",
+    "tacticalNotes": "Anclaje mecánico y correas de tracción para anular vectores de deriva relativa durante abordaje o salvamento. Sin daño directo asociado.",
+    "source": "Catálogo Técnico de Armamento Naval y Sistemas de Combate (Pre-Protomolécula)",
+    "isCanon": true
+  },
+  {
+    "id": "space-mine",
+    "name": "Mina Espacial",
+    "category": "mine",
+    "range": "medium",
+    "damage": "4d6",
+    "tacticalNotes": "Arma de área/negación de zona. Detonación por proximidad o activación remota; útil para asegurar rutas de escape o bloquear corredores de tránsito estrechos (cinturón).",
+    "source": "Decisión de diseño propia — no documentada en las fuentes RPG disponibles",
+    "isCanon": false,
+    "notes": "Añadida porque el brief original del proyecto especifica minas como sistema de combate. Daño igualado al torpedo (4d6) como punto de partida; ajustar en fase de balanceo (Fase 5)."
+  }
+]

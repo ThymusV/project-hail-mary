@@ -1,0 +1,163 @@
+[
+  {
+    "id": "un",
+    "name": "Naciones Unidas (UN / UNN)",
+    "type": "government",
+    "territory": "Tierra y Luna. Centros: New York City (administrativo) y Lovell City (estratégico-lunar).",
+    "structure": "Administración centralizada con departamentos especializados (Oficina de Colonización, bajo mando de la Cnel. Shanelle Tercero, Ret.). Uso sistemático de 'Job Fixers' y contratistas externos para negación plausible.",
+    "keyResources": [
+      "Bibliotecas gubernamentales con cartografía oficial",
+      "Corporaciones Colonial Enterprises y Caracara Électronique",
+      "Flota de la UNN"
+    ],
+    "tensions": [
+      "Rumores confirmados de arsenales nucleares en bases subterráneas lunares",
+      "Competencia hostil Colonial Enterprises vs. RCE"
+    ],
+    "culture": "Expansión burocrática y control de flujos de datos; dependencia de activos extraoficiales para la seguridad de intereses corporativos.",
+    "notableFigures": ["Cnel. Shanelle Tercero (Ret.)", "Sebastian Pope (intermediario Vector Sécurité)"],
+    "source": "Informe de Facciones Humanas; Informe de Geografía Humana",
+    "isCanon": true
+  },
+  {
+    "id": "mcrn",
+    "name": "República del Congreso de Marte (MCRN)",
+    "type": "government",
+    "territory": "Marte. Capital: Londres Nova.",
+    "structure": "Fusión de jerarquía militar e instituciones científicas avanzadas. Dhanbad Nova es el principal motor de desarrollo técnico.",
+    "keyResources": [
+      "Tecnología militar de grado superior (cualidades Durable/Fine/Sealed)",
+      "Drones semiautónomos de alta eficiencia",
+      "Naves de reconocimiento clase Giza y escoltas clase Phantom"
+    ],
+    "tensions": [
+      "Fricción con la UN por derechos de prospección",
+      "Rastreo prioritario de hardware militar robado en naves piratas (Picus, Cybelle) por riesgo de proliferación"
+    ],
+    "culture": "Meritocracia técnica y competitividad científica. Presencia de la Primera Iglesia Reformada Baptista Marciana.",
+    "notableFigures": ["Dra. Cicily Kolsun (Dhanbad Nova)"],
+    "source": "Informe de Facciones Humanas; Informe de Geografía Humana",
+    "isCanon": true
+  },
+  {
+    "id": "belt-ape",
+    "name": "El Cinturón / A.P.E. (Alianza de Planetas Exteriores)",
+    "type": "belt-faction",
+    "territory": "Ceres, Estación Tycho, Estación Prométhée (Saturno), anillos de Saturno.",
+    "structure": "Red descentralizada operando en la clandestinidad. Fragmentación extrema: facción principal en Ceres liderada por Anderson Dawes; células disidentes como los 'Libres Follets' (Hector Cruz) y el 'Collectif Voltaire' operan a menudo fuera de la cadena de mando de la APE.",
+    "keyResources": [
+      "Minería de hielo (transportadores como el Butin d'Abzu para Krystal Kleer)",
+      "Pericia en operaciones de baja gravedad y vacío"
+    ],
+    "tensions": [
+      "Resistencia armada contra las potencias Interiores",
+      "Piratería interna descontrolada (Anne Bonny, Cybelle, Picus)"
+    ],
+    "culture": "Supervivencia extrema y jerga propia (Belter). Desconfianza absoluta hacia las corporaciones terrestres y los sistemas de vigilancia de los Interiores.",
+    "notableFigures": ["Anderson Dawes", "Hector Cruz (Libres Follets)"],
+    "source": "Informe de Facciones Humanas",
+    "isCanon": true
+  },
+  {
+    "id": "tycho-manufacturing",
+    "name": "Tycho Manufacturing and Engineering Concern",
+    "type": "megacorp",
+    "territory": "Cinturón y planetas exteriores. Sede principal: Estación Tycho.",
+    "structure": "Megacorporación de ingeniería. Dirección estratégica bajo figuras como Raven Barush.",
+    "keyResources": [
+      "Megaproyectos de infraestructura orbital",
+      "Única capacidad de ensamblar estaciones móviles y naves de gran tonelaje"
+    ],
+    "tensions": [],
+    "notableFigures": ["Raven Barush"],
+    "source": "Informe de Simulación Económica; Informe de Geografía Humana",
+    "isCanon": true
+  },
+  {
+    "id": "krystal-kleer",
+    "name": "Krystal Kleer",
+    "type": "corporation",
+    "territory": "Anillos de Saturno y Cinturón.",
+    "structure": "Monopolio de facto en la recolección y procesamiento de hielo del sistema de Saturno.",
+    "keyResources": ["Butin d'Abzu (transporte pesado de hielo)"],
+    "tensions": [
+      "Rumores persistentes sobre 'silicatos extraños' hallados en los anillos de Saturno han disparado el mercado de espionaje industrial en su sector de operación"
+    ],
+    "source": "Informe de Simulación Económica; Informe de Facciones Humanas",
+    "isCanon": true
+  },
+  {
+    "id": "mao-kwikowski",
+    "name": "Mao-Kwikowski Mercantile",
+    "type": "megacorp",
+    "territory": "Sistémico: Tierra, Marte, Cinturón, lunas jovianas.",
+    "structure": "Escala staggering: millones de empleados y cientos de naves. Integración vertical de suministros médicos, farmacéuticos y logística de alta prioridad.",
+    "keyResources": [
+      "Red logística masiva — principal vector de infiltración de dispositivos de vigilancia ('mouchards') en el Cinturón"
+    ],
+    "tensions": [],
+    "source": "Informe de Simulación Económica; Informe de Facciones Humanas",
+    "isCanon": true
+  },
+  {
+    "id": "royal-charter-energy",
+    "name": "Royal Charter Energy (RCE)",
+    "type": "corporation",
+    "territory": "Sistema solar (operaciones de prospección).",
+    "structure": "Gigante de la exploración y colonización. Compite directamente por contratos de desarrollo planetario.",
+    "keyResources": ["Naves de investigación clase Giza"],
+    "tensions": [
+      "Rivalidad directa con Epoch Colony Services; riesgo de bloqueos legales",
+      "Competencia hostil con Colonial Enterprises (UN)"
+    ],
+    "source": "Informe de Geografía Humana; Análisis de Cobertura Documental",
+    "isCanon": true
+  },
+  {
+    "id": "gray-savannah-extractions",
+    "name": "Gray Savannah Extractions / Vector Sécurité",
+    "type": "corporation",
+    "territory": "Base de operaciones en Lovell City (Luna).",
+    "structure": "Propiedad de Sebastian Pope. Especializada en minería y seguridad de alta observabilidad (operaciones negras).",
+    "keyResources": ["Nave minera Le Minéralogue", "Cuadrillas de mineros prospectores"],
+    "tensions": [],
+    "notableFigures": ["Sebastian Pope"],
+    "source": "Informe de Geografía Humana; Análisis de Cobertura Documental",
+    "isCanon": true
+  },
+  {
+    "id": "dhanbad-nova",
+    "name": "Dhanbad Nova",
+    "type": "corporation",
+    "territory": "Marte.",
+    "structure": "Instalación de investigación de élite en xenobiología y ciencia planetaria, con protocolos agresivos de adquisición biológica.",
+    "keyResources": [],
+    "tensions": ["Competidor principal de RCE en xenobiología y ciencias planetarias"],
+    "notableFigures": ["Dra. Cicily Kolsun"],
+    "source": "Informe de Geografía Humana; Informe de Facciones Humanas",
+    "isCanon": true
+  },
+  {
+    "id": "epoch-colony-services",
+    "name": "Epoch Colony Services",
+    "type": "corporation",
+    "territory": "No especificado en las fuentes.",
+    "structure": "Colonización, asentamientos y logística.",
+    "keyResources": [],
+    "tensions": ["Rivalidad directa con Royal Charter Energy (RCE); riesgo de bloqueos legales"],
+    "source": "Informe de Geografía Humana",
+    "isCanon": true
+  },
+  {
+    "id": "pyramid-news-network",
+    "name": "Pyramid News Network (PNN)",
+    "type": "info-network",
+    "territory": "Basada en Callisto (Port Hampton).",
+    "structure": "Estación de noticias/radio pirata. Actúa como eje de guerra de información.",
+    "keyResources": [],
+    "tensions": [],
+    "source": "Informe de Facciones Humanas; Informe de Geografía Humana",
+    "isCanon": true,
+    "notes": "El canon menciona que difunde 'datos filtrados sobre la protomolécula'. Para nuestra ambientación pre-protomolécula, usar solo su rol como emisora de teorías de conspiración/propaganda genérica del Cinturón, sin contenido de protomolécula."
+  }
+]
