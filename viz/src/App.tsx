@@ -1,13 +1,11 @@
 /**
  * App — root layout for the Pre-Protomolécula solar system simulator.
  *
- * Fase 1 milestone: "el jugador puede viajar entre nodos y maniobrar
- * localmente" (movimiento dual, sección 2.1 del documento de arquitectura).
- * This first pass covers the transit half — the player's ship (a
- * ShipInstance, see schema/ship-instance.schema.ts) can be sent to any
- * location, travel time computed by the brachistochrone model in
- * engine/orbitalMechanics.ts (validated against canon travel-time tables),
- * and the world clock (useWorldClockStore) drives its progress in-scene.
+ * Fase 1 milestone COMPLETE with this pass: "movimiento dual" — system
+ * transit (SolarSystemScene, previous pass) + local free-flight maneuvering
+ * (LocalSpaceScene, this pass). viewMode toggles between the two frames as
+ * a hard cut, not a continuous zoom — consistent with the project's own
+ * "cada frame es un espacio de coordenadas completamente separado" principle.
  *
  * INIT FLOW (unchanged from the base repo):
  * 1. index.html inline style → black background immediately
@@ -16,10 +14,11 @@
  * 4. Suspense INSIDE Canvas wraps scene children (not the Canvas itself)
  */
 
-import { Suspense, Component, useMemo, useState, type ReactNode } from 'react';
+import { Suspense, Component, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Canvas } from '@react-three/fiber';
 
 import { SolarSystemScene } from '@/components/canvas/SolarSystemScene';
+import { LocalSpaceScene } from '@/components/canvas/LocalSpaceScene';
 import { Effects } from '@/components/canvas/Effects';
 import { validateGameData } from '@/schema/game-data.schema';
 import type { Location } from '@/schema/location.schema';
@@ -33,9 +32,6 @@ import factionsRaw from '@/data/factions.json';
 import locationsRaw from '@/data/locations.json';
 
 // ── Validate game data once at startup ─────────────────────────────────
-// Cheap runtime safety net on top of the vitest suite: if a future manual
-// edit to the JSON breaks a cross-reference (bad weaponId/factionId), we
-// fail loudly here instead of silently rendering broken/missing markers.
 const gameData = validateGameData({
   ships: shipsRaw,
   weapons: weaponsRaw,
@@ -45,12 +41,12 @@ const gameData = validateGameData({
 
 const LOCATIONS_BY_ID = new Map(gameData.locations.map((l) => [l.id, l]));
 
-// Burn options offered to the player — matches the G levels documented
-// across every canon travel-time table (0.3g crucero / 1.0g estándar).
 const BURN_OPTIONS = [
   { label: '0.3g (crucero, ahorra combustible)', g: 0.3 },
   { label: '1.0g (estándar, más rápido)', g: 1.0 },
 ] as const;
+
+type ViewMode = 'system' | 'local';
 
 // ── Error Boundary ──────────────────────────────────────────────────
 
@@ -82,7 +78,7 @@ class CanvasErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 }
 
-// ── Location info + travel panel ────────────────────────────────────────
+// ── Location info + travel panel (system view only) ─────────────────────
 
 function LocationInfoPanel({ location }: { location: Location | null }) {
   const ships = useShipInstancesStore((s) => s.ships);
@@ -147,34 +143,66 @@ function LocationInfoPanel({ location }: { location: Location | null }) {
   );
 }
 
-// ── Time controls ────────────────────────────────────────────────────────
+// ── Time controls + "enter local space" (system view only) ──────────────
 
-function TimeControls() {
+function TimeControlsAndDocking({ onEnterLocal }: { onEnterLocal: () => void }) {
   const timeScale = useWorldClockStore((s) => s.timeScale);
   const setTimeScale = useWorldClockStore((s) => s.setTimeScale);
   const elapsedHours = useWorldClockStore((s) => s.elapsedHours);
+  const ships = useShipInstancesStore((s) => s.ships);
+  const playerShip = ships.find((s) => s.isPlayerControlled);
 
   const days = Math.floor(elapsedHours / 24);
   const hours = Math.floor(elapsedHours % 24);
+  const dockedLocation = playerShip?.currentLocationId ? LOCATIONS_BY_ID.get(playerShip.currentLocationId) : null;
 
   return (
     <div style={{ ...panelStyle, bottom: 'auto', top: 16, left: 16, pointerEvents: 'auto' }}>
       <strong>Día {days}, {hours}h</strong>
       <div style={{ marginTop: 6, display: 'flex', gap: 4 }}>
-        <button style={timeButtonStyle(timeScale === 0)} onClick={() => setTimeScale(0)}>
-          Pausa
+        <button style={timeButtonStyle(timeScale === 0)} onClick={() => setTimeScale(0)}>Pausa</button>
+        <button style={timeButtonStyle(timeScale === DEFAULT_TIME_SCALE)} onClick={() => setTimeScale(DEFAULT_TIME_SCALE)}>1×</button>
+        <button style={timeButtonStyle(timeScale === DEFAULT_TIME_SCALE * 10)} onClick={() => setTimeScale(DEFAULT_TIME_SCALE * 10)}>10×</button>
+        <button style={timeButtonStyle(timeScale === DEFAULT_TIME_SCALE * 50)} onClick={() => setTimeScale(DEFAULT_TIME_SCALE * 50)}>50×</button>
+      </div>
+
+      {dockedLocation && (
+        <button style={{ ...travelButtonStyle, marginTop: 10, width: '100%' }} onClick={onEnterLocal}>
+          🛰️ Entrar en espacio local ({dockedLocation.name})
         </button>
-        <button style={timeButtonStyle(timeScale === DEFAULT_TIME_SCALE)} onClick={() => setTimeScale(DEFAULT_TIME_SCALE)}>
-          1×
-        </button>
-        <button style={timeButtonStyle(timeScale === DEFAULT_TIME_SCALE * 10)} onClick={() => setTimeScale(DEFAULT_TIME_SCALE * 10)}>
-          10×
-        </button>
-        <button style={timeButtonStyle(timeScale === DEFAULT_TIME_SCALE * 50)} onClick={() => setTimeScale(DEFAULT_TIME_SCALE * 50)}>
-          50×
+      )}
+    </div>
+  );
+}
+
+// ── Local-space HUD (controls hint + speed + exit) ──────────────────────
+
+function LocalSpaceHud({ locationName, onExit }: { locationName: string; onExit: () => void }) {
+  const [speed, setSpeed] = useState(0);
+
+  useEffect(() => {
+    function handleSpeed(e: Event) {
+      setSpeed((e as CustomEvent<number>).detail);
+    }
+    window.addEventListener('local-space-speed', handleSpeed);
+    return () => window.removeEventListener('local-space-speed', handleSpeed);
+  }, []);
+
+  return (
+    <>
+      <div style={{ ...panelStyle, bottom: 'auto', top: 16, left: 16, pointerEvents: 'auto' }}>
+        <strong>Espacio local — {locationName}</strong>
+        <p style={{ margin: '6px 0 0', fontSize: 11, opacity: 0.7 }}>
+          W/S empuje · Q/E RCS lateral · Espacio/Shift subir-bajar · A/D girar · ↑/↓ cabeceo
+        </p>
+        <button style={{ ...travelButtonStyle, marginTop: 8 }} onClick={onExit}>
+          ← Salir a vista de sistema
         </button>
       </div>
-    </div>
+      <div style={{ ...panelStyle, top: 'auto' }}>
+        <strong>{speed.toFixed(1)} m/s</strong>
+      </div>
+    </>
   );
 }
 
@@ -223,7 +251,12 @@ function timeButtonStyle(active: boolean): React.CSSProperties {
 
 export default function App() {
   const [selected, setSelected] = useState<Location | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('system');
   const shipClasses = useMemo(() => gameData.ships, []);
+
+  const ships = useShipInstancesStore((s) => s.ships);
+  const playerShip = ships.find((s) => s.isPlayerControlled);
+  const dockedLocation = playerShip?.currentLocationId ? LOCATIONS_BY_ID.get(playerShip.currentLocationId) : null;
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', background: '#030308' }}>
@@ -241,11 +274,18 @@ export default function App() {
           <color attach="background" args={['#030308']} />
           <Effects />
           <Suspense fallback={null}>
-            <SolarSystemScene
-              locations={gameData.locations}
-              shipClasses={shipClasses}
-              onSelectLocation={setSelected}
-            />
+            {viewMode === 'system' ? (
+              <SolarSystemScene
+                locations={gameData.locations}
+                shipClasses={shipClasses}
+                onSelectLocation={setSelected}
+              />
+            ) : (
+              <LocalSpaceScene
+                locationType={dockedLocation?.type ?? 'station'}
+                onExit={() => setViewMode('system')}
+              />
+            )}
           </Suspense>
         </Canvas>
       </CanvasErrorBoundary>
@@ -253,8 +293,14 @@ export default function App() {
       <div className="vignette-overlay" />
 
       <div className="ui-overlay" style={{ pointerEvents: 'none' }}>
-        <TimeControls />
-        <LocationInfoPanel location={selected} />
+        {viewMode === 'system' ? (
+          <>
+            <TimeControlsAndDocking onEnterLocal={() => setViewMode('local')} />
+            <LocationInfoPanel location={selected} />
+          </>
+        ) : (
+          <LocalSpaceHud locationName={dockedLocation?.name ?? '—'} onExit={() => setViewMode('system')} />
+        )}
       </div>
     </div>
   );
