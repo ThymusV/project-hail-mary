@@ -9,12 +9,14 @@ import { z } from 'zod';
 import { ShipCatalogSchema } from './ship.schema';
 import { WeaponCatalogSchema } from './weapon.schema';
 import { FactionCatalogSchema } from './faction.schema';
+import { LocationCatalogSchema } from './location.schema';
 
 export const GameDataSchema = z
   .object({
     ships: ShipCatalogSchema,
     weapons: WeaponCatalogSchema,
     factions: FactionCatalogSchema,
+    locations: LocationCatalogSchema,
   })
   .check(
     z.superRefine((data, ctx) => {
@@ -41,6 +43,18 @@ export const GameDataSchema = z
             message: `Ship "${ship.id}" references unknown factionId "${ship.factionId}"`,
             input: data,
             path: ['ships'],
+            inst: null as never,
+          });
+        }
+      }
+
+      for (const location of data.locations) {
+        if (location.factionId !== null && !factionIds.has(location.factionId)) {
+          ctx.issues.push({
+            code: 'custom',
+            message: `Location "${location.id}" references unknown factionId "${location.factionId}"`,
+            input: data,
+            path: ['locations'],
             inst: null as never,
           });
         }
